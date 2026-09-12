@@ -53,7 +53,7 @@ export default function Home() {
           {[
             "No accounts. Just a nickname and a room code.",
             "Up to six players, real dice, real trades.",
-            "Play solo teams or free-for-all.",
+            "Play solo or in teams.",
           ].map((line) => (
             <div key={line} className="flex items-start gap-3 text-parchment/90">
               <span className="mt-2 h-1.5 w-1.5 rounded-full bg-amber shrink-0" />
@@ -86,8 +86,7 @@ export default function Home() {
             onChange={(e) => setNickname(e.target.value.slice(0, 16))}
             placeholder="What should we call you?"
             autoComplete="off"
-            className="w-full bg-ink-raised border border-ink-border notch-sm px-4 py-3 text-parchment placeholder:text-slate/70 outline-none focus:border-amber transition-colors"
-          />
+            className={`w-full ${mode == "join" ? "mb-0" : "mb-25.5"} bg-ink-raised border border-ink-border notch-sm px-4 py-3 text-parchment placeholder:text-slate/70 outline-none focus:border-amber transition-colors`}/>
 
           {mode === "join" && (
             <div className="mt-5">
@@ -153,9 +152,8 @@ function TabButton({
     <button
       type="button"
       onClick={onClick}
-      className={`px-5 py-2.5 text-sm font-medium transition-colors ${
-        active ? "bg-amber text-ink" : "bg-transparent text-slate hover:text-parchment"
-      }`}
+      className={`px-5 py-2.5 text-sm font-medium transition-colors ${active ? "bg-amber text-ink" : "bg-transparent text-slate hover:text-parchment"
+        }`}
     >
       {children}
     </button>
@@ -163,16 +161,10 @@ function TabButton({
 }
 
 function DecorativeTiles() {
-  const colors = ["#E8A33D", "#3FC9A5", "#5B6178", "#C97B5B"];
   return (
-    <div className="relative z-10 hidden md:grid grid-cols-4 gap-2 mt-16 w-56">
-      {colors.map((c, i) => (
-        <div
-          key={i}
-          className="notch-sm h-14 border border-ink-border"
-          style={{ backgroundColor: `${c}22`, borderColor: `${c}55` }}
-        />
-      ))}
+    <div className="relative z-10 hidden md:flex gap-2 mt-14 w-54">
+      सुरु गरु कब्जा, अनि आउछ मजा
+      सुरु गरु कब्जा, अनि आउछ मजा
     </div>
   );
 }
