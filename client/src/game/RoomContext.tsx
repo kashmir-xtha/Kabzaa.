@@ -130,7 +130,7 @@ export function RoomProvider({ children }: { children: ReactNode }) {
   }, [push]);
 
   const leaveRoom = useCallback(() => {
-    socket.emit("room:leave", {});
+    socket.emit("room:leave", {}, () => {});
     clearSession();
     setRoom(null);
     setPlayerId(null);
