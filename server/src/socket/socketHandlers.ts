@@ -53,12 +53,11 @@ export function registerSocketHandlers(io: Server, roomManager: RoomManager) {
       }
     };
 
-    socket.on("room:create", (payload: { nickname: unknown; avatar: unknown }, rawAck: Ack<{ room: Room; playerId: string }>) => {
+    socket.on("room:create", (payload: { nickname: unknown }, rawAck: Ack<{ room: Room; playerId: string }>) => {
       const ack: Ack<{ room: Room; playerId: string }> = typeof rawAck === "function" ? rawAck : () => {};
       try {
         const nickname = sanitizeNickname(payload?.nickname);
-        const avatar = sanitizeAvatar(payload?.avatar);
-        const { room, player } = roomManager.createRoom(nickname, avatar, socket.id);
+        const { room, player } = roomManager.createRoom(nickname, socket.id);
         socket.join(room.code);
         ack({ ok: true, data: { room, playerId: player.id } });
       } catch (err) {
@@ -68,13 +67,12 @@ export function registerSocketHandlers(io: Server, roomManager: RoomManager) {
 
     socket.on(
       "room:join",
-      (payload: { code: unknown; nickname: unknown; avatar: unknown }, rawAck: Ack<{ room: Room; playerId: string }>) => {
+      (payload: { code: unknown; nickname: unknown }, rawAck: Ack<{ room: Room; playerId: string }>) => {
         const ack: Ack<{ room: Room; playerId: string }> = typeof rawAck === "function" ? rawAck : () => {};
         try {
           const code = sanitizeRoomCode(payload?.code);
           const nickname = sanitizeNickname(payload?.nickname);
-          const avatar = sanitizeAvatar(payload?.avatar);
-          const { room, player } = roomManager.joinRoom(code, nickname, avatar, socket.id);
+          const { room, player } = roomManager.joinRoom(code, nickname, socket.id);
           socket.join(room.code);
           ack({ ok: true, data: { room, playerId: player.id } });
           broadcastRoom(room);
@@ -123,6 +121,13 @@ export function registerSocketHandlers(io: Server, roomManager: RoomManager) {
         const teamId = payload?.teamId;
         if (teamId !== "A" && teamId !== "B") throw new GameError("Invalid team.");
         return roomManager.selectTeam(socket.id, teamId as TeamId);
+      }, ack);
+    });
+
+    socket.on("player:selectAvatar", (payload: { avatar: unknown }, ack: Ack<Room>) => {
+      handle(() => {
+        const avatar = sanitizeAvatar(payload?.avatar);
+        return roomManager.selectAvatar(socket.id, avatar);
       }, ack);
     });
 

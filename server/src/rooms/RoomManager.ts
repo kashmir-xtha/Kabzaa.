@@ -14,6 +14,7 @@ import { generateRoomCode } from "../utils/roomCode.js";
 import { endTurn, initializeGame, payBailAndRoll, performRoll, buyCurrentTile, passCurrentPurchase, buildHouse, sellHouse, createTrade, resolveTrade, withdrawTrade, mortgageTile, unmortgageTile, declareBankruptcy, postChatMessage, forceCompleteTurn } from "../game/engine.js";
 import { JAIL_BAIL } from "../game/board.js";
 import { GameError } from "../utils/errors.js";
+import { isValidAvatar, pickUnusedAvatar } from "../utils/avatars.js";
 
 export { GameError };
 
@@ -56,9 +57,9 @@ export class RoomManager {
    * can still push the resulting room state to everyone. */
   onBroadcast?: (room: Room) => void;
 
-  createRoom(nickname: string, avatar: string, socketId: string): { room: Room; player: Player } {
+  createRoom(nickname: string, socketId: string): { room: Room; player: Player } {
     const code = this.uniqueRoomCode();
-    const player = this.buildPlayer(nickname, avatar, true);
+    const player = this.buildPlayer(nickname, pickUnusedAvatar([]), true);
 
     const room: Room = {
       code,
@@ -90,7 +91,7 @@ export class RoomManager {
     return { room, player };
   }
 
-  joinRoom(codeInput: string, nickname: string, avatar: string, socketId: string): { room: Room; player: Player } {
+  joinRoom(codeInput: string, nickname: string, socketId: string): { room: Room; player: Player } {
     const code = codeInput.trim().toUpperCase();
     const room = this.rooms.get(code);
     if (!room) throw new GameError("That room code doesn't exist.");
@@ -98,6 +99,7 @@ export class RoomManager {
     if (room.players.length >= room.settings.maxPlayers) throw new GameError("That room is full.");
 
     const uniqueNickname = this.dedupeNickname(room, nickname);
+    const avatar = pickUnusedAvatar(room.players.map((p) => p.avatar));
     const player = this.buildPlayer(uniqueNickname, avatar, false);
     room.players.push(player);
 
@@ -221,6 +223,16 @@ export class RoomManager {
     room.teams.forEach((t) => (t.memberIds = t.memberIds.filter((id) => id !== player.id)));
     team.memberIds.push(player.id);
     player.teamId = teamId;
+    return room;
+  }
+
+  selectAvatar(socketId: string, avatar: string): Room {
+    const { room, player } = this.requirePlayer(socketId);
+    if (room.status !== "lobby") throw new GameError("You can only change your avatar in the lobby.");
+    if (!isValidAvatar(avatar)) throw new GameError("Pick a valid avatar.");
+    const takenBySomeoneElse = room.players.some((p) => p.id !== player.id && p.avatar === avatar);
+    if (takenBySomeoneElse) throw new GameError("Someone already has that avatar.");
+    player.avatar = avatar;
     return room;
   }
 
