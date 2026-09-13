@@ -1,6 +1,6 @@
 import { useState } from "react";
 import Wordmark from "../components/Wordmark";
-import { AvatarBadge } from "../game/avatars";
+import { AVATARS, AvatarBadge } from "../game/avatars";
 import Chat from "../game/Chat";
 import { useRoom } from "../game/RoomContext";
 import { useToast } from "../components/Toast";
@@ -17,7 +17,7 @@ function startBlockedReason(room: Room): string | null {
 }
 
 export default function Lobby() {
-  const { room, me, isHost, leaveRoom, setReady, selectMode, selectTeam, changeSettings, startGame } = useRoom();
+  const { room, me, isHost, leaveRoom, setReady, selectMode, selectTeam, selectAvatar, changeSettings, startGame } = useRoom();
   const { push } = useToast();
   const [confirmingLeave, setConfirmingLeave] = useState(false);
 
@@ -119,6 +119,29 @@ export default function Lobby() {
 
         {/* Setup panel */}
         <aside className="notch border border-ink-border bg-ink-raised p-5 flex flex-col gap-6">
+          <div>
+            <p className="text-sm font-medium text-slate mb-3">Your avatar</p>
+            <div className="grid grid-cols-6 gap-2">
+              {AVATARS.map((a) => {
+                const takenBy = room.players.find((p) => p.avatar === a.id && p.id !== me.id);
+                return (
+                  <button
+                    type="button"
+                    key={a.id}
+                    onClick={() => !takenBy && selectAvatar(a.id)}
+                    disabled={Boolean(takenBy)}
+                    aria-label={a.label}
+                    aria-pressed={me.avatar === a.id}
+                    title={takenBy ? `Taken by ${takenBy.nickname}` : a.label}
+                    className={`focus:outline-none ${takenBy ? "opacity-25 cursor-not-allowed" : "cursor-pointer"}`}
+                  >
+                    <AvatarBadge id={a.id} size={36} selected={me.avatar === a.id} />
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
           <div>
             <p className="text-sm font-medium text-slate mb-3">Mode</p>
             <div className="flex notch-sm overflow-hidden border border-ink-border">

@@ -1,9 +1,8 @@
-const IDENTITY_KEY = "claim:identity";
-const SESSION_KEY = "claim:session";
+const IDENTITY_KEY = "kabzaa:identity";
+const SESSION_KEY = "kabzaa:session";
 
 export interface StoredIdentity {
   nickname: string;
-  avatar: string;
 }
 
 export interface StoredSession {
@@ -25,7 +24,7 @@ export function saveIdentity(identity: StoredIdentity) {
     localStorage.setItem(IDENTITY_KEY, JSON.stringify(identity));
   } catch {
     // Storage can fail in private-browsing contexts — non-fatal, the
-    // player just won't have their nickname/avatar prefilled next time.
+    // player just won't have their nickname prefilled next time.
   }
 }
 

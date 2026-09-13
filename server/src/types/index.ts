@@ -1,7 +1,3 @@
-// Core domain types for CLAIM. Kept intentionally small for Stage 1
-// (room + lobby only). Board/property/economy types are added in later
-// stages without needing to touch this file's existing shape.
-
 export type GameMode = "casual" | "teams";
 
 export type RoomStatus = "lobby" | "in_progress" | "finished";

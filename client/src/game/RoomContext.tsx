@@ -19,12 +19,13 @@ interface RoomContextValue {
   playerId: string | null;
   me: Room["players"][number] | null;
   isHost: boolean;
-  createRoom: (nickname: string, avatar: string) => Promise<boolean>;
-  joinRoom: (code: string, nickname: string, avatar: string) => Promise<boolean>;
+  createRoom: (nickname: string) => Promise<boolean>;
+  joinRoom: (code: string, nickname: string) => Promise<boolean>;
   leaveRoom: () => void;
   setReady: (ready: boolean) => void;
   selectMode: (mode: GameMode) => void;
   selectTeam: (teamId: TeamId) => void;
+  selectAvatar: (avatar: string) => void;
   changeSettings: (partial: Partial<GameSettings>) => void;
   startGame: () => void;
   rollDice: () => void;
@@ -103,10 +104,10 @@ export function RoomProvider({ children }: { children: ReactNode }) {
     };
   }, []);
 
-  const createRoom = useCallback(async (nickname: string, avatar: string) => {
-    const res = await emitWithAck<{ room: Room; playerId: string }>("room:create", { nickname, avatar });
+  const createRoom = useCallback(async (nickname: string) => {
+    const res = await emitWithAck<{ room: Room; playerId: string }>("room:create", { nickname });
     if (res.ok) {
-      saveIdentity({ nickname, avatar });
+      saveIdentity({ nickname });
       saveSession({ roomCode: res.data.room.code, playerId: res.data.playerId });
       setRoom(res.data.room);
       setPlayerId(res.data.playerId);
@@ -116,10 +117,10 @@ export function RoomProvider({ children }: { children: ReactNode }) {
     return false;
   }, [push]);
 
-  const joinRoom = useCallback(async (code: string, nickname: string, avatar: string) => {
-    const res = await emitWithAck<{ room: Room; playerId: string }>("room:join", { code, nickname, avatar });
+  const joinRoom = useCallback(async (code: string, nickname: string) => {
+    const res = await emitWithAck<{ room: Room; playerId: string }>("room:join", { code, nickname });
     if (res.ok) {
-      saveIdentity({ nickname, avatar });
+      saveIdentity({ nickname });
       saveSession({ roomCode: res.data.room.code, playerId: res.data.playerId });
       setRoom(res.data.room);
       setPlayerId(res.data.playerId);
@@ -147,6 +148,7 @@ export function RoomProvider({ children }: { children: ReactNode }) {
   const setReady = useCallback((ready: boolean) => void fireAndReport("player:setReady", { ready }), [fireAndReport]);
   const selectMode = useCallback((mode: GameMode) => void fireAndReport("room:selectMode", { mode }), [fireAndReport]);
   const selectTeam = useCallback((teamId: TeamId) => void fireAndReport("player:selectTeam", { teamId }), [fireAndReport]);
+  const selectAvatar = useCallback((avatar: string) => void fireAndReport("player:selectAvatar", { avatar }), [fireAndReport]);
   const changeSettings = useCallback(
     (partial: Partial<GameSettings>) => void fireAndReport("room:changeSettings", partial),
     [fireAndReport]
@@ -216,6 +218,7 @@ export function RoomProvider({ children }: { children: ReactNode }) {
         setReady,
         selectMode,
         selectTeam,
+        selectAvatar,
         changeSettings,
         startGame,
         rollDice,

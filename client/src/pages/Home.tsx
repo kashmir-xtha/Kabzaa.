@@ -1,7 +1,6 @@
 import { useEffect, useState, type FormEvent, type ReactNode } from "react";
 import { useNavigate } from "react-router-dom";
 import Wordmark from "../components/Wordmark";
-import { AVATARS, AvatarBadge } from "../game/avatars";
 import { loadIdentity } from "../game/identity";
 import { useRoom } from "../game/RoomContext";
 
@@ -13,16 +12,12 @@ export default function Home() {
 
   const [mode, setMode] = useState<Mode>("create");
   const [nickname, setNickname] = useState("");
-  const [avatar, setAvatar] = useState(AVATARS[0].id);
   const [code, setCode] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
     const saved = loadIdentity();
-    if (saved) {
-      setNickname(saved.nickname);
-      setAvatar(saved.avatar);
-    }
+    if (saved) setNickname(saved.nickname);
   }, []);
 
   const canSubmit = nickname.trim().length > 0 && (mode === "create" || code.trim().length >= 4) && connected;
@@ -31,8 +26,7 @@ export default function Home() {
     e.preventDefault();
     if (!canSubmit || submitting) return;
     setSubmitting(true);
-    const ok =
-      mode === "create" ? await createRoom(nickname, avatar) : await joinRoom(code, nickname, avatar);
+    const ok = mode === "create" ? await createRoom(nickname) : await joinRoom(code, nickname);
     setSubmitting(false);
     if (ok) navigate("/lobby");
   }
@@ -104,24 +98,6 @@ export default function Home() {
             </div>
           )}
 
-          <div className="mt-6">
-            <p className="text-sm font-medium text-slate mb-3">Pick an avatar</p>
-            <div className="grid grid-cols-6 gap-2.5">
-              {AVATARS.map((a) => (
-                <button
-                  type="button"
-                  key={a.id}
-                  onClick={() => setAvatar(a.id)}
-                  aria-label={a.label}
-                  aria-pressed={avatar === a.id}
-                  className="focus:outline-none"
-                >
-                  <AvatarBadge id={a.id} size={44} selected={avatar === a.id} />
-                </button>
-              ))}
-            </div>
-          </div>
-
           <button
             type="submit"
             disabled={!canSubmit || submitting}
@@ -152,8 +128,9 @@ function TabButton({
     <button
       type="button"
       onClick={onClick}
-      className={`px-5 py-2.5 text-sm font-medium transition-colors ${active ? "bg-amber text-ink" : "bg-transparent text-slate hover:text-parchment"
-        }`}
+      className={`px-5 py-2.5 text-sm font-medium transition-colors ${
+        active ? "bg-amber text-ink" : "bg-transparent text-slate hover:text-parchment"
+      }`}
     >
       {children}
     </button>
