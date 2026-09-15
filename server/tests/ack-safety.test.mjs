@@ -36,9 +36,9 @@ async function main() {
   const host = await connect();
   const guest = await connect();
 
-  const created = await ackWith(host, "room:create", { nickname: "Ada", avatar: "fox" });
+  const created = await ackWith(host, "room:create", { nickname: "Ada" });
   const code = created.data.room.code;
-  await ackWith(guest, "room:join", { code, nickname: "Bo", avatar: "owl" });
+  await ackWith(guest, "room:join", { code, nickname: "Bo" });
 
   // The exact reproduction: emit room:leave with NO callback at all.
   guest.emit("room:leave", {});

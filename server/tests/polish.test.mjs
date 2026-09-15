@@ -14,8 +14,8 @@ async function main() {
     let lastBroadcast = null;
     rm.onBroadcast = (room) => (lastBroadcast = room);
 
-    const { room: r1, player: p1 } = rm.createRoom("Ada", "fox", "sock-1");
-    const { player: p2 } = rm.joinRoom(r1.code, "Bo", "owl", "sock-2");
+    const { room: r1, player: p1 } = rm.createRoom("Ada", "sock-1");
+    const { player: p2 } = rm.joinRoom(r1.code, "Bo", "sock-2");
     rm.setReady("sock-1", true);
     rm.setReady("sock-2", true);
     rm.changeSettings("sock-1", { turnTimerEnabled: true, turnTimerSeconds: 15 });
@@ -37,8 +37,8 @@ async function main() {
     const broadcasts = [];
     rm.onBroadcast = (room) => broadcasts.push(room);
 
-    const { room: r1 } = rm.createRoom("Ada", "fox", "sock-a");
-    const { player: bo } = rm.joinRoom(r1.code, "Bo", "owl", "sock-b");
+    const { room: r1 } = rm.createRoom("Ada", "sock-a");
+    const { player: bo } = rm.joinRoom(r1.code, "Bo", "sock-b");
     rm.setReady("sock-a", true);
     rm.setReady("sock-b", true);
     const started = rm.startGame("sock-a");
@@ -56,8 +56,8 @@ async function main() {
   // --- Test 3: leaving mid-game runs the player through bankruptcy first (no orphaned ownership) ---
   {
     const rm = new RoomManager();
-    const { room: r1 } = rm.createRoom("Ada", "fox", "sock-x");
-    rm.joinRoom(r1.code, "Bo", "owl", "sock-y");
+    const { room: r1 } = rm.createRoom("Ada", "sock-x");
+    rm.joinRoom(r1.code, "Bo", "sock-y");
     rm.setReady("sock-x", true);
     rm.setReady("sock-y", true);
     const started = rm.startGame("sock-x");

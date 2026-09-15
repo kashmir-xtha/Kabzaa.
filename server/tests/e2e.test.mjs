@@ -40,11 +40,11 @@ async function main() {
   const host = await connect();
   const guest = await connect();
 
-  const created = await ack(host, "room:create", { nickname: "Ada", avatar: "fox" });
+  const created = await ack(host, "room:create", { nickname: "Ada" });
   assert(created.ok, "create room");
   const code = created.data.room.code;
 
-  const joined = await ack(guest, "room:join", { code, nickname: "Bo", avatar: "owl" });
+  const joined = await ack(guest, "room:join", { code, nickname: "Bo" });
   assert(joined.ok, "join room");
 
   const chat = await ack(host, "chat:send", { text: "hi" });

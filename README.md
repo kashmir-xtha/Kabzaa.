@@ -411,6 +411,7 @@ summary. What's covered:
 | `polish.test.mjs` | Turn timer scheduling, disconnect reconnect/cancel, mid-game leave |
 | `e2e.test.mjs` | Boots a real server + real Socket.IO client connections through a full game (lobby → dice → purchase → rent → trade) |
 | `ack-safety.test.mjs` | Regression test: a client emitting an event with no acknowledgment callback must never crash the server (see the fix in `socketHandlers.ts` — every handler normalizes `ack` before calling it) |
+| `avatars.test.mjs` | tests covering auto-assignment, uniqueness, and the lobby-only restriction |
 
 Most files construct a plain `Room` object by hand and call `engine.ts`
 functions directly with mocked dice (`Math.random` is temporarily
