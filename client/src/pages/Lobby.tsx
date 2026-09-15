@@ -32,7 +32,7 @@ export default function Lobby() {
   const sortedPlayers = [...room.players].sort((a, b) => a.joinedAt - b.joinedAt);
 
   return (
-    <div className="min-h-screen px-6 py-8 md:px-12 md:py-10">
+    <div className="min-h-screen p-4">
       <header className="flex flex-wrap items-center justify-between gap-4 mb-10">
         <Wordmark size="sm" />
 
