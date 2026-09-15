@@ -23,7 +23,7 @@ function throws(fn) { try { fn(); return false; } catch { return true; } }
   const rm = new RoomManager();
   const { room: r1, player: host } = rm.createRoom("Ada", "sock-1");
   rm.joinRoom(r1.code, "Bo", "sock-2");
-  const otherAvatars = ["fox", "owl", "otter", "panda", "raven", "lynx", "hare", "boar", "seal", "crane", "wolf", "stag"]
+  const otherAvatars = ["fox", "hare", "panda", "seal", "boar", "lynx"]
     .filter((a) => a !== host.avatar);
   const room = rm.getRoomByCode(r1.code);
   const guestAvatar = room.players.find((p) => p.id !== host.id).avatar;
