@@ -1,13 +1,12 @@
-# Kabzaa
+# Kabzaa.
 
-A live multiplayer property-trading board game for you and up to five friends.
+A live multiplayer property-trading board game for up to six friends.
 No accounts — just a nickname, an avatar, and a room code.
 
-This is a complete, playable game: lobby, an original 40-tile board, dice
+It provides a playable game: lobby, an original 40-tile board, dice
 and turns, property purchase and rent, houses and hotels, mortgaging,
-trading, chat, a team mode, bankruptcy, win conditions, and an optional
-per-turn countdown timer. See [Known limitations](#known-limitations) for
-what's deliberately left out.
+trading, chat, a team mode, bankruptcy, win conditions. 
+See [Known limitations](#known-limitations) for what's deliberately left out.
 
 - **[Quick start](#quick-start)** — run it locally in two terminals
 - **[How the game works](#how-the-game-works)** — the actual rules
@@ -19,7 +18,8 @@ what's deliberately left out.
 
 ## Quick start
 
-You'll need [Node.js](https://nodejs.org) 20 or later. Open two terminals.
+You'll need [Node.js](https://nodejs.org) 20 or later. 
+Open two terminals.
 
 **Terminal 1 — the server:**
 ```bash
@@ -40,7 +40,7 @@ browser. Open it again in a second tab (or a different browser) to play
 against yourself while testing.
 
 Running both on `localhost` only lets people on the *same machine* join
-(different browser tabs). To actually play with friends elsewhere, see
+(different browser tabs). To actually play with friends on different network, see
 [Deploying](#deploying).
 
 ## How the game works
@@ -211,7 +211,7 @@ verbatim on every update:
 - **`roomCode.ts`** — `generateRoomCode()` picks 6 characters from an
   alphabet that skips visually ambiguous ones (`0`/`O`, `1`/`I`/`L`) so
   codes are easy to read aloud or retype.
-- **`avatars.ts`** — the 6 valid avatar ids (`"fox"`, `"owl"`, …) and
+- **`avatars.ts`** — the 6 valid avatar ids (`"fox"`, `"hare"`, …) and
   `isValidAvatar()`, used to reject a client sending a made-up avatar id.
 
 ### `server/src/game/board.ts`
@@ -411,6 +411,7 @@ summary. What's covered:
 | `polish.test.mjs` | Turn timer scheduling, disconnect reconnect/cancel, mid-game leave |
 | `e2e.test.mjs` | Boots a real server + real Socket.IO client connections through a full game (lobby → dice → purchase → rent → trade) |
 | `ack-safety.test.mjs` | Regression test: a client emitting an event with no acknowledgment callback must never crash the server (see the fix in `socketHandlers.ts` — every handler normalizes `ack` before calling it) |
+| `avatars.test.mjs` | tests covering auto-assignment, uniqueness, and the lobby-only restriction |
 
 Most files construct a plain `Room` object by hand and call `engine.ts`
 functions directly with mocked dice (`Math.random` is temporarily
@@ -437,7 +438,7 @@ To let friends on other networks join:
 4. Share the client URL.
 
 **Environment variables:**
-- `client/.env` (copy from `.env.example`): `VITE_SERVER_URL` — defaults to
+- `client/.env`: `VITE_SERVER_URL` — defaults to
   `http://localhost:4000`.
 - Server: `PORT` (default `4000`), `CLIENT_ORIGIN` (default
   `http://localhost:5173`).
@@ -447,16 +448,9 @@ To let friends on other networks join:
 Deliberate scope decisions, not oversights:
 
 - **No auctions.** Declining to buy a property just leaves it unowned
-  (real Monopoly auctions it to the table). `settings.auctionEnabled`
-  exists in the type but isn't wired up to anything.
 - **No persistent leaderboard across separate games.** No database is
   used; the "final standings" screen is computed live from the current
   game and disappears once the room is gone.
 - **Trading a mortgaged property isn't supported** — unmortgage it first.
   (Real rules let you trade a mortgaged property, with the buyer taking on
   the mortgage; simplified away here.)
-- **No IP from the real Monopoly game.** The board, district names, house
-  rules, and branding here are all original. "Monopoly" is a Hasbro
-  trademark; this project deliberately doesn't use that name or copy its
-  specific board/street names, art, or logo — only generic, decades-old
-  property-trading-game *mechanics* that aren't anyone's IP.

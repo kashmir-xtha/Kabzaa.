@@ -32,7 +32,7 @@ export default function Home() {
   }
 
   return (
-    <div className="min-h-screen grid md:grid-cols-[minmax(0,1fr)_minmax(0,1.3fr)]">
+    <div className="h-dvh overflow-hidden grid md:grid-cols-[minmax(0,1fr)_minmax(0,1.3fr)]">
       {/* Brand panel */}
       <div className="relative flex flex-col justify-between px-8 py-10 md:px-14 md:py-16 bg-ink-raised border-b md:border-b-0 md:border-r border-ink-border overflow-hidden">
         <div className="relative z-10">
@@ -60,7 +60,7 @@ export default function Home() {
       </div>
 
       {/* Form panel */}
-      <div className="flex items-center justify-center px-6 py-12 md:px-14">
+      <div className="flex items-center justify-center px-6 py-12 md:px-14 overflow-y-auto">
         <form onSubmit={handleSubmit} className="w-full max-w-md">
           <div className="flex notch-sm overflow-hidden border border-ink-border mb-8 w-fit">
             <TabButton active={mode === "create"} onClick={() => setMode("create")}>

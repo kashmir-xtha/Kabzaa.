@@ -24,6 +24,17 @@ html,
 body,
 #root {
   height: 100%;
+  scrollbar-width: thin;
+  scrollbar-color: #e8a33d transparent;
+}
+
+html::-webkit-scrollbar-button{
+  display: none;
+}
+
+/* The draggable scroll handle */
+html::-webkit-scrollbar-thumb {
+  display: none;
 }
 
 body {
@@ -49,6 +60,7 @@ body {
 }
 
 @media (prefers-reduced-motion: reduce) {
+
   *,
   *::before,
   *::after {

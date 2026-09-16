@@ -32,8 +32,8 @@ export default function Lobby() {
   const sortedPlayers = [...room.players].sort((a, b) => a.joinedAt - b.joinedAt);
 
   return (
-    <div className="min-h-screen p-4">
-      <header className="flex flex-wrap items-center justify-between gap-4 mb-10">
+    <div className="h-dvh overflow-hidden flex flex-col p-4">
+      <header className="flex-none flex flex-wrap items-center justify-between gap-4 mb-5">
         <Wordmark size="sm" />
 
         <div className="flex items-center gap-3">
@@ -42,7 +42,7 @@ export default function Lobby() {
             className="notch-sm border border-ink-border bg-ink-raised px-4 py-2 flex items-center gap-3 hover:border-amber transition-colors"
           >
             <span className="text-xs text-slate">Room code</span>
-            <span className="font-display text-lg tracking-[0.2em] text-amber">{room.code}</span>
+            <span className="font-display text-sm tracking-[0.2em] text-amber">{room.code}</span>
           </button>
           {!confirmingLeave ? (
             <button
@@ -65,60 +65,66 @@ export default function Lobby() {
         </div>
       </header>
 
-      <div className="grid md:grid-cols-[minmax(0,1fr)_360px] gap-8 items-start">
-        {/* Roster */}
-        <section>
-          <h2 className="text-sm font-medium text-slate mb-4">
-            Players <span className="text-parchment/60">({room.players.length}/{room.settings.maxPlayers})</span>
-          </h2>
-          <div className="grid sm:grid-cols-2 gap-3">
-            {sortedPlayers.map((p) => {
-              const team = room.teams.find((t) => t.id === p.teamId);
-              return (
-                <div
-                  key={p.id}
-                  className={`notch border px-4 py-3 flex items-center gap-3 bg-ink-raised transition-colors ${
-                    p.id === me.id ? "border-amber" : "border-ink-border"
-                  } ${!p.connected ? "opacity-50" : ""}`}
-                >
-                  <AvatarBadge id={p.avatar} size={44} />
-                  <div className="min-w-0 flex-1">
-                    <div className="flex items-center gap-2">
-                      <p className="font-medium text-parchment truncate">{p.nickname}</p>
-                      {p.id === me.id && <span className="text-xs text-slate shrink-0">(you)</span>}
-                    </div>
-                    <div className="flex items-center gap-2 mt-0.5 text-xs">
-                      {p.isHost && <span className="text-amber">Host</span>}
-                      {team && (
-                        <span style={{ color: team.color }}>{team.name}</span>
-                      )}
-                      {!p.connected && <span className="text-slate">Reconnecting…</span>}
-                    </div>
-                  </div>
-                  <span
-                    className={`text-xs font-medium px-2.5 py-1 notch-sm shrink-0 ${
-                      p.ready ? "bg-teal/15 text-teal" : "bg-ink-raised-2 text-slate"
-                    }`}
+      <div className="flex-1 min-h-0 grid md:grid-cols-[minmax(0,1fr)_360px] gap-6 md:gap-8">
+        {/* Roster + chat */}
+        <div className="min-h-0 flex flex-col gap-4">
+          <section className="flex-none">
+            <h2 className="text-sm font-medium text-slate mb-3">
+              Players <span className="text-parchment/60">({room.players.length}/{room.settings.maxPlayers})</span>
+            </h2>
+            <div className="grid sm:grid-cols-2 gap-3">
+              {sortedPlayers.map((p) => {
+                const team = room.teams.find((t) => t.id === p.teamId);
+                return (
+                  <div
+                    key={p.id}
+                    className={`notch border px-4 py-3 flex items-center gap-3 bg-ink-raised transition-colors ${
+                      p.id === me.id ? "border-amber" : "border-ink-border"
+                    } ${!p.connected ? "opacity-50" : ""}`}
                   >
-                    {p.ready ? "Ready" : "Not ready"}
-                  </span>
+                    <AvatarBadge id={p.avatar} size={44} />
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center gap-2">
+                        <p className="font-medium text-parchment truncate">{p.nickname}</p>
+                        {p.id === me.id && <span className="text-xs text-slate shrink-0">(you)</span>}
+                      </div>
+                      <div className="flex items-center gap-2 mt-0.5 text-xs">
+                        {p.isHost && <span className="text-amber">Host</span>}
+                        {team && (
+                          <span style={{ color: team.color }}>{team.name}</span>
+                        )}
+                        {!p.connected && <span className="text-slate">Reconnecting…</span>}
+                      </div>
+                    </div>
+                    <span
+                      className={`text-xs font-medium px-2.5 py-1 notch-sm shrink-0 ${
+                        p.ready ? "bg-teal/15 text-teal" : "bg-ink-raised-2 text-slate"
+                      }`}
+                    >
+                      {p.ready ? "Ready" : "Not ready"}
+                    </span>
+                  </div>
+                );
+              })}
+              {Array.from({ length: Math.max(0, room.settings.maxPlayers - room.players.length) }).map((_, i) => (
+                <div
+                  key={`empty-${i}`}
+                  className="notch border border-dashed border-ink-border px-4 py-3 flex items-center gap-3 text-slate/60"
+                >
+                  <div className="notch-sm w-11 h-11 border border-dashed border-ink-border shrink-0" />
+                  <p className="text-sm">Waiting for a player…</p>
                 </div>
-              );
-            })}
-            {Array.from({ length: Math.max(0, room.settings.maxPlayers - room.players.length) }).map((_, i) => (
-              <div
-                key={`empty-${i}`}
-                className="notch border border-dashed border-ink-border px-4 py-3 flex items-center gap-3 text-slate/60"
-              >
-                <div className="notch-sm w-11 h-11 border border-dashed border-ink-border shrink-0" />
-                <p className="text-sm">Waiting for a player…</p>
-              </div>
-            ))}
+              ))}
+            </div>
+          </section>
+
+          <div className="flex-1 min-h-0">
+            <Chat messages={room.chatMessages} myPlayerId={me.id} />
           </div>
-        </section>
+        </div>
 
         {/* Setup panel */}
-        <aside className="notch border border-ink-border bg-ink-raised p-5 flex flex-col gap-6">
+        <aside className="notch border border-ink-border bg-ink-raised p-5 flex flex-col gap-5 min-h-0 overflow-y-auto">
           <div>
             <p className="text-sm font-medium text-slate mb-3">Your avatar</p>
             <div className="grid grid-cols-6 gap-2">
@@ -229,7 +235,7 @@ export default function Lobby() {
             </div>
           )}
 
-          <div className="border-t border-ink-border pt-5 flex flex-col gap-3">
+          <div className="border-t border-ink-border pt-4 flex flex-col gap-3">
             <button
               onClick={() => setReady(!me.ready)}
               className={`notch-sm py-3 font-semibold text-sm transition-colors ${
@@ -255,10 +261,6 @@ export default function Lobby() {
             )}
           </div>
         </aside>
-      </div>
-
-      <div className="mt-8 max-w-[360px] ml-auto h-64">
-        <Chat messages={room.chatMessages} myPlayerId={me.id} />
       </div>
     </div>
   );
