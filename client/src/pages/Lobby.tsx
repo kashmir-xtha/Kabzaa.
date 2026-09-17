@@ -39,7 +39,7 @@ export default function Lobby() {
         <div className="flex items-center gap-3">
           <button
             onClick={copyCode}
-            className="notch-sm border border-ink-border bg-ink-raised px-4 py-2 flex items-center gap-3 hover:border-amber transition-colors"
+            className="notch-sm border border-ink-border bg-ink-raised px-4 py-2 flex items-center gap-3 hover:border-amber transition-colors cursor-pointer"
           >
             <span className="text-xs text-slate">Room code</span>
             <span className="font-display text-sm tracking-[0.2em] text-amber">{room.code}</span>
@@ -47,17 +47,17 @@ export default function Lobby() {
           {!confirmingLeave ? (
             <button
               onClick={() => setConfirmingLeave(true)}
-              className="notch-sm border border-ink-border px-4 py-2 text-sm text-slate hover:text-signal hover:border-signal transition-colors"
+              className="notch-sm border border-ink-border px-4 py-2 text-sm text-slate hover:text-signal hover:border-signal transition-colors cursor-pointer"
             >
               Leave
             </button>
           ) : (
             <div className="notch-sm border border-signal px-3 py-2 flex items-center gap-2 text-sm">
               <span className="text-parchment">Leave room?</span>
-              <button onClick={leaveRoom} className="text-signal font-semibold">
+              <button onClick={leaveRoom} className="text-signal font-semibold cursor-pointer">
                 Yes
               </button>
-              <button onClick={() => setConfirmingLeave(false)} className="text-slate">
+              <button onClick={() => setConfirmingLeave(false)} className="text-slate cursor-pointer">
                 No
               </button>
             </div>
@@ -214,7 +214,7 @@ export default function Lobby() {
                   <span className="text-slate">Turn timer</span>
                   <button
                     onClick={() => changeSettings({ turnTimerEnabled: !room.settings.turnTimerEnabled })}
-                    className={`notch-sm px-3 py-1 text-xs font-medium border ${
+                    className={`notch-sm px-3 py-1 text-xs font-medium border cursor-pointer ${
                       room.settings.turnTimerEnabled ? "bg-teal text-ink border-teal" : "border-ink-border text-slate"
                     }`}
                   >
@@ -241,7 +241,7 @@ export default function Lobby() {
                 <button
                   onClick={startGame}
                   disabled={Boolean(blockedReason)}
-                  className="notch bg-amber text-ink font-semibold py-3 text-sm disabled:opacity-40 disabled:cursor-not-allowed hover:opacity-90 transition-opacity"
+                  className="notch bg-amber text-ink font-semibold py-3 text-sm disabled:opacity-40 disabled:cursor-not-allowed hover:opacity-90 transition-opacity cursor-pointer"
                 >
                   Start game
                 </button>

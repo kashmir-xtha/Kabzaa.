@@ -61,7 +61,7 @@ export default function Home() {
       {/* Form panel */}
       <div className="flex items-center justify-center px-6 py-12 md:px-14 overflow-y-auto">
         <form onSubmit={handleSubmit} className="w-full max-w-md">
-          <div className="flex notch-sm overflow-hidden border border-ink-border mb-8 w-fit">
+          <div className="flex notch-sm overflow-hidden border border-ink-border mb-8 w-fit cursor-pointer">
             <TabButton active={mode === "create"} onClick={() => setMode("create")}>
               New game
             </TabButton>
@@ -100,7 +100,7 @@ export default function Home() {
           <button
             type="submit"
             disabled={!canSubmit || submitting}
-            className="mt-8 w-full notch bg-amber text-ink font-semibold py-3.5 text-base transition-opacity disabled:opacity-40 disabled:cursor-not-allowed hover:opacity-90"
+            className="mt-8 w-full notch bg-amber text-ink font-semibold py-3.5 text-base transition-opacity disabled:opacity-40 disabled:cursor-not-allowed hover:opacity-90 cursor-pointer"
           >
             {submitting ? "One moment…" : mode === "create" ? "Create room" : "Join room"}
           </button>
