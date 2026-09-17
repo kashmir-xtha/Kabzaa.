@@ -38,8 +38,7 @@ export default function Home() {
         <div className="relative z-10">
           <Wordmark />
           <p className="mt-4 max-w-sm text-slate text-lg leading-relaxed">
-            Buy property, strike deals, and bankrupt your friends — live, in the same
-            room code.
+            Buy property, strike deals, and bankrupt your friends live, in the same room code.
           </p>
         </div>
 

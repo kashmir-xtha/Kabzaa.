@@ -436,7 +436,7 @@ export class RoomManager {
       nickname,
       avatar,
       isHost,
-      ready: false,
+      ready: true,
       connected: true,
       teamId: null,
       joinedAt: Date.now(),
