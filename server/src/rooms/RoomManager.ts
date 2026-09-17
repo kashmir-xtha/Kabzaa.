@@ -236,6 +236,24 @@ export class RoomManager {
     return room;
   }
 
+  kickPlayer(socketId: string, targetId: string): { room: Room; kickedSocketId: string | null } {
+    const { room, player: host } = this.requirePlayer(socketId);
+    this.requireHost(room, host);
+    if (room.status !== "lobby") throw new GameError("You can only remove players before the game starts.");
+    if (targetId === host.id) throw new GameError("You can't kick yourself.");
+    const target = room.players.find((p) => p.id === targetId);
+    if (!target) throw new GameError("Player not found.");
+
+    const kickedSocketId = this.playerToSocket.get(targetId) ?? null;
+    if (kickedSocketId) {
+      this.socketToConnection.delete(kickedSocketId);
+      this.playerToSocket.delete(targetId);
+    }
+    room.players = room.players.filter((p) => p.id !== targetId);
+    this.reassignTeamsAfterLeave(room);
+    return { room, kickedSocketId };
+  }
+
   changeSettings(socketId: string, partial: Partial<GameSettings>): Room {
     const { room, player } = this.requirePlayer(socketId);
     this.requireHost(room, player);

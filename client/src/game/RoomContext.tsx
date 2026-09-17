@@ -26,6 +26,7 @@ interface RoomContextValue {
   selectMode: (mode: GameMode) => void;
   selectTeam: (teamId: TeamId) => void;
   selectAvatar: (avatar: string) => void;
+  kickPlayer: (targetId: string) => void;
   changeSettings: (partial: Partial<GameSettings>) => void;
   startGame: () => void;
   rollDice: () => void;
@@ -88,12 +89,19 @@ export function RoomProvider({ children }: { children: ReactNode }) {
     function onDisconnect() {
       setConnected(false);
     }
+    function onKicked() {
+      clearSession();
+      setRoom(null);
+      setPlayerId(null);
+      push("The host has removed you from the room.", "error");
+    }
     function onRoomState(next: Room) {
       setRoom(next);
     }
 
     socket.on("connect", onConnect);
     socket.on("disconnect", onDisconnect);
+    socket.on("room:kicked", onKicked);
     socket.on("room:state", onRoomState);
     socket.connect();
 
@@ -101,6 +109,7 @@ export function RoomProvider({ children }: { children: ReactNode }) {
       socket.off("connect", onConnect);
       socket.off("disconnect", onDisconnect);
       socket.off("room:state", onRoomState);
+      socket.off("room:kicked", onKicked);
     };
   }, []);
 
@@ -149,6 +158,7 @@ export function RoomProvider({ children }: { children: ReactNode }) {
   const selectMode = useCallback((mode: GameMode) => void fireAndReport("room:selectMode", { mode }), [fireAndReport]);
   const selectTeam = useCallback((teamId: TeamId) => void fireAndReport("player:selectTeam", { teamId }), [fireAndReport]);
   const selectAvatar = useCallback((avatar: string) => void fireAndReport("player:selectAvatar", { avatar }), [fireAndReport]);
+  const kickPlayer = useCallback((targetId: string) => void fireAndReport("room:kick", { targetId }), [fireAndReport]);
   const changeSettings = useCallback(
     (partial: Partial<GameSettings>) => void fireAndReport("room:changeSettings", partial),
     [fireAndReport]
@@ -235,6 +245,7 @@ export function RoomProvider({ children }: { children: ReactNode }) {
         unmortgageProperty,
         forfeitGame,
         sendChatMessage,
+        kickPlayer
       }}
     >
       {children}

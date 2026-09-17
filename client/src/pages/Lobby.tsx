@@ -17,7 +17,7 @@ function startBlockedReason(room: Room): string | null {
 }
 
 export default function Lobby() {
-  const { room, me, isHost, leaveRoom, selectMode, selectTeam, selectAvatar, changeSettings, startGame } = useRoom();
+  const { room, me, isHost, leaveRoom, selectMode, selectTeam, selectAvatar, changeSettings, startGame, kickPlayer } = useRoom();
   const { push } = useToast();
   const [confirmingLeave, setConfirmingLeave] = useState(false);
 
@@ -103,6 +103,14 @@ export default function Lobby() {
                     >
                       {p.ready ? "Ready" : "Not ready"}
                     </span>
+                    {isHost && p.id !== me.id && (
+                      <button
+                        onClick={() => kickPlayer(p.id)}
+                        className="text-xs text-slate hover:text-signal transition-colors shrink-0 cursor-pointer"
+                      >
+                        Kick
+                      </button>
+                    )}
                   </div>
                 );
               })}

@@ -103,6 +103,22 @@ export function registerSocketHandlers(io: Server, roomManager: RoomManager) {
       ack({ ok: true, data: null });
       if (room) broadcastRoom(room);
     });
+    
+    socket.on("room:kick", (payload: { targetId: unknown }, rawAck: Ack<Room>) => {
+      const ack: Ack<Room> = typeof rawAck === "function" ? rawAck : () => { };
+      try {
+        if (typeof payload?.targetId !== "string") throw new GameError("Missing player id.");
+        const { room, kickedSocketId } = roomManager.kickPlayer(socket.id, payload.targetId);
+        if (kickedSocketId) {
+          io.to(kickedSocketId).emit("room:kicked");
+          io.sockets.sockets.get(kickedSocketId)?.leave(room.code);
+        }
+        ack({ ok: true, data: room });
+        broadcastRoom(room);
+      } catch (err) {
+        ack({ ok: false, error: err instanceof GameError ? err.message : "Couldn't remove that player." });
+      }
+    });
 
     socket.on("player:setReady", (payload: { ready: unknown }, ack: Ack<Room>) => {
       handle(() => roomManager.setReady(socket.id, Boolean(payload?.ready)), ack);
