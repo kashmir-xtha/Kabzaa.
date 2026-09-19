@@ -26,7 +26,7 @@ export default function Board({
 
   return (
     <div
-      className="grid w-full aspect-square max-w-[760px] mx-auto bg-ink border border-ink-border"
+      className="grid aspect-square h-full max-h-full max-w-full mx-auto bg-ink border border-ink-border rounded-lg p-1 shadow-2xl relative select-none shrink-0"
       style={{
         gridTemplateColumns: "1.3fr repeat(9, 1fr) 1.3fr",
         gridTemplateRows: "1.3fr repeat(9, 1fr) 1.3fr",
@@ -53,7 +53,10 @@ export default function Board({
         );
       })}
 
-      <div style={{ gridRow: "2 / 11", gridColumn: "2 / 11" }} className="flex items-center justify-center p-4">
+      <div
+        style={{ gridRow: "2 / 11", gridColumn: "2 / 11" }}
+        className="flex items-center justify-center p-2 bg-ink/40 rounded border border-ink-border/30 overflow-hidden"
+      >
         {children}
       </div>
     </div>
