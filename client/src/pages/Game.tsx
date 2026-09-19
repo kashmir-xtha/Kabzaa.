@@ -36,49 +36,66 @@ export default function Game() {
   const gameOver = room.status === "finished";
 
   return (
-    <div className="min-h-screen px-4 py-6 md:px-8 md:py-8">
+    <div className="h-dvh w-screen overflow-hidden p-3 bg-ink text-parchment font-sans">
       {gameOver && <GameOverBanner room={room} />}
 
-      <header className="flex items-center justify-between mb-6">
-        <Wordmark size="sm" />
-        <div className="flex items-center gap-3">
-          <span className="text-xs text-slate">Room {room.code}</span>
-          {!me.bankrupt && !gameOver && (
-            confirmingForfeit ? (
-              <div className="flex items-center gap-2 text-xs">
-                <span className="text-slate">Give up?</span>
-                <button onClick={forfeitGame} className="text-signal font-semibold">
-                  Yes
-                </button>
-                <button onClick={() => setConfirmingForfeit(false)} className="text-slate">
-                  No
-                </button>
-              </div>
-            ) : (
-              <button onClick={() => setConfirmingForfeit(true)} className="text-xs text-slate hover:text-signal transition-colors">
-                Forfeit
-              </button>
-            )
-          )}
-        </div>
-      </header>
+      <div className="grid grid-cols-1 lg:grid-cols-[280px_1fr_320px] xl:grid-cols-[300px_1fr_340px] h-full w-full gap-3 md:gap-4 min-h-0 overflow-hidden">
+        {/* COLUMN 1 (LEFT): Brand + Chat */}
+        <aside className="h-full min-h-0 flex flex-col gap-3 overflow-hidden">
+          <div className="notch border border-ink-border bg-ink-raised p-3 shrink-0 flex items-center justify-between">
+            <Wordmark size="sm" />
+          </div>
+          <div className="flex-1 min-h-0 flex flex-col">
+            <Chat messages={room.chatMessages} myPlayerId={me.id} />
+          </div>
+        </aside>
 
-      <div className="grid lg:grid-cols-[minmax(0,1fr)_340px] gap-6 items-start">
-        <Board players={room.players} ownership={room.ownership} houses={room.houses}>
-          <CenterPanel
-            room={room}
-            currentPlayer={currentPlayer}
-            isMyTurn={isMyTurn && !gameOver}
-            me={me}
-            onRoll={rollDice}
-            onPayBail={payBail}
-            onEndTurn={endTurn}
-            onBuy={buyProperty}
-            onPass={passPurchase}
-          />
-        </Board>
+        {/* COLUMN 2 (MIDDLE): Full Board */}
+        <main className="h-full min-h-0 min-w-0 flex items-center justify-center relative p-1 overflow-hidden">
+          <Board players={room.players} ownership={room.ownership} houses={room.houses}>
+            <CenterPanel
+              room={room}
+              currentPlayer={currentPlayer}
+              isMyTurn={isMyTurn && !gameOver}
+              me={me}
+              onRoll={rollDice}
+              onPayBail={payBail}
+              onEndTurn={endTurn}
+              onBuy={buyProperty}
+              onPass={passPurchase}
+            />
+          </Board>
+        </main>
 
-        <aside className="flex flex-col gap-4">
+        {/* COLUMN 3 (RIGHT): Room info, Players, Trades, Properties, Event Log */}
+        <aside className="h-full min-h-0 flex flex-col gap-3 overflow-y-auto pr-1">
+          {/* Room Code & Forfeit Card */}
+          <div className="border border-ink-border bg-ink-raised p-3 shrink-0 flex items-center justify-between">
+            <span className="text-xs font-mono text-slate bg-ink/60 px-2 py-1 rounded border border-ink-border">
+              Room {room.code}
+            </span>
+            {!me.bankrupt && !gameOver && (
+              confirmingForfeit ? (
+                <div className="flex items-center gap-2 text-xs bg-ink/60 border border-signal/40 px-2 py-0.5 rounded">
+                  <span className="text-slate">Give up?</span>
+                  <button onClick={forfeitGame} className="text-signal font-semibold hover:underline">
+                    Yes
+                  </button>
+                  <button onClick={() => setConfirmingForfeit(false)} className="text-slate hover:text-parchment">
+                    No
+                  </button>
+                </div>
+              ) : (
+                <button
+                  onClick={() => setConfirmingForfeit(true)}
+                  className="text-xs text-slate hover:text-signal transition-colors px-1 font-medium"
+                >
+                  Forfeit
+                </button>
+              )
+            )}
+          </div>
+
           <PlayerHud room={room} playerId={playerId} currentTurnId={currentTurnId} />
           <TradePanel room={room} me={me} />
           <PropertiesPanel
@@ -89,9 +106,6 @@ export default function Game() {
             onMortgage={mortgageProperty}
             onUnmortgage={unmortgageProperty}
           />
-          <div className="h-64">
-            <Chat messages={room.chatMessages} myPlayerId={me.id} />
-          </div>
           <EventLog room={room} />
         </aside>
       </div>
@@ -120,20 +134,24 @@ function GameOverBanner({ room }: { room: Room }) {
   const standings = [...room.players].sort((a, b) => netWorth(room, b) - netWorth(room, a));
 
   return (
-    <div className="mb-6 notch border border-amber bg-ink-raised-2 px-6 py-5">
-      <div className="text-center mb-4">
-        <p className="text-xs text-amber uppercase tracking-wide mb-1">Game over</p>
-        <p className="font-display text-3xl text-parchment">{winnerName} wins!</p>
-      </div>
-      <div className="max-w-sm mx-auto flex flex-col gap-1.5">
-        {standings.map((p, i) => (
-          <div key={p.id} className="flex items-center gap-3 text-sm">
-            <span className="text-slate w-4 text-right">{i + 1}</span>
-            <AvatarBadge id={p.avatar} size={24} />
-            <span className={`flex-1 truncate ${p.bankrupt ? "text-slate line-through" : "text-parchment"}`}>{p.nickname}</span>
-            <span className="tabular-nums text-parchment/90">${netWorth(room, p).toLocaleString()}</span>
-          </div>
-        ))}
+    <div className="fixed inset-0 z-50 bg-ink/80 backdrop-blur-sm flex items-center justify-center p-4">
+      <div className="notch border border-amber bg-ink-raised-2 p-6 w-full max-w-md shadow-2xl animate-fade-in">
+        <div className="text-center mb-5">
+          <p className="text-xs text-amber font-semibold uppercase tracking-widest mb-1">Game over</p>
+          <p className="font-display text-3xl text-parchment">{winnerName} wins!</p>
+        </div>
+        <div className="flex flex-col gap-2 max-h-[60vh] overflow-y-auto pr-1">
+          {standings.map((p, i) => (
+            <div key={p.id} className="notch-sm bg-ink/60 border border-ink-border px-3 py-2 flex items-center gap-3 text-sm">
+              <span className="text-slate font-mono text-xs w-4 text-right">{i + 1}</span>
+              <AvatarBadge id={p.avatar} size={28} />
+              <span className={`flex-1 truncate ${p.bankrupt ? "text-slate line-through" : "text-parchment font-medium"}`}>
+                {p.nickname}
+              </span>
+              <span className="tabular-nums font-mono text-amber">${netWorth(room, p).toLocaleString()}</span>
+            </div>
+          ))}
+        </div>
       </div>
     </div>
   );
@@ -151,8 +169,8 @@ function TurnCountdown({ deadline }: { deadline: number }) {
 
   const low = secondsLeft <= 10;
   return (
-    <p className={`text-xs mt-1 tabular-nums ${low ? "text-signal" : "text-slate"}`}>
-      {secondsLeft}s left this turn
+    <p className={`text-[11px] font-mono mt-0.5 tabular-nums ${low ? "text-signal font-bold animate-pulse" : "text-slate"}`}>
+      {secondsLeft}s left
     </p>
   );
 }
@@ -183,22 +201,22 @@ function CenterPanel({
 
   if (room.status === "finished") {
     return (
-      <div className="flex flex-col items-center gap-2 text-center max-w-[280px]">
+      <div className="flex flex-col items-center gap-2 text-center max-w-[260px]">
         <Wordmark size="sm" />
-        <p className="text-sm text-slate">Thanks for playing.</p>
+        <p className="text-xs text-slate">Thanks for playing.</p>
       </div>
     );
   }
 
   return (
-    <div className="flex flex-col items-center gap-4 text-center max-w-[280px]">
+    <div className="flex flex-col items-center justify-center gap-3 text-center w-full max-w-[260px] p-2">
       <Wordmark size="sm" />
 
       <div>
-        <p className="text-xs text-slate uppercase tracking-wide">
+        <p className="text-[10px] text-slate uppercase tracking-wider font-semibold">
           {isMyTurn ? "Your turn" : "Now playing"}
         </p>
-        <p className="font-display text-2xl text-parchment mt-0.5">
+        <p className="font-display text-xl text-parchment leading-tight mt-0.5">
           {isMyTurn ? "You" : currentPlayer?.nickname ?? "…"}
         </p>
         {room.settings.turnTimerEnabled && room.turnDeadline && <TurnCountdown deadline={room.turnDeadline} />}
@@ -207,28 +225,30 @@ function CenterPanel({
       {room.lastRoll ? (
         <Dice die1={room.lastRoll.die1} die2={room.lastRoll.die2} />
       ) : (
-        <div className="h-14 flex items-center text-sm text-slate">Waiting to roll…</div>
+        <div className="h-10 flex items-center text-xs text-slate">Waiting to roll…</div>
       )}
 
       {me.bankrupt ? (
-        <p className="text-sm text-slate">You're out of the game — spectating.</p>
+        <p className="text-xs text-slate">You're out — spectating.</p>
       ) : isMyTurn ? (
         <div className="flex flex-col gap-2 w-full">
           {room.turnPhase === "awaiting-purchase" && (
-            <div className="notch-sm border border-amber bg-ink-raised-2 px-3 py-3 flex flex-col gap-2">
-              <p className="text-sm text-parchment font-medium">{tileAt(me.position).name}</p>
-              <p className="text-xs text-slate">Buy for ${tileAt(me.position).price}?</p>
+            <div className="notch-sm border border-amber bg-ink-raised-2 p-2.5 flex flex-col gap-2">
+              <div>
+                <p className="text-xs text-parchment font-semibold truncate">{tileAt(me.position).name}</p>
+                <p className="text-[11px] text-amber font-mono">Buy for ${tileAt(me.position).price}?</p>
+              </div>
               <div className="flex gap-2">
                 <button
                   onClick={onPass}
-                  className="flex-1 notch-sm border border-ink-border py-2 text-sm text-parchment hover:border-signal transition-colors"
+                  className="flex-1 notch-sm border border-ink-border py-1.5 text-xs text-parchment hover:border-signal transition-colors"
                 >
                   Pass
                 </button>
                 <button
                   onClick={onBuy}
                   disabled={me.money < (tile.price ?? 0)}
-                  className="flex-1 notch-sm bg-amber text-ink font-semibold py-2 text-sm disabled:opacity-40 disabled:cursor-not-allowed hover:opacity-90 transition-opacity"
+                  className="flex-1 notch-sm bg-amber text-ink font-semibold py-1.5 text-xs disabled:opacity-40 disabled:cursor-not-allowed hover:opacity-90 transition-opacity"
                 >
                   Buy
                 </button>
@@ -237,8 +257,8 @@ function CenterPanel({
           )}
 
           {me.inJail && room.turnPhase === "rolling" && (
-            <p className="text-xs text-slate">
-              In Holding — try {me.jailTurns}/3 for doubles, or pay ${50} to leave now.
+            <p className="text-[11px] text-slate leading-tight">
+              In Holding ({me.jailTurns}/3). Roll doubles or pay $50.
             </p>
           )}
 
@@ -246,7 +266,7 @@ function CenterPanel({
             <button
               onClick={onPayBail}
               disabled={me.money < 50}
-              className="notch-sm border border-ink-border py-2 text-sm text-parchment hover:border-amber disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+              className="notch-sm border border-ink-border py-1.5 text-xs text-parchment hover:border-amber disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
             >
               Pay $50 &amp; roll
             </button>
@@ -255,23 +275,23 @@ function CenterPanel({
           {room.turnPhase === "rolling" && (
             <button
               onClick={onRoll}
-              className="notch bg-amber text-ink font-semibold py-3 text-sm hover:opacity-90 transition-opacity"
+              className="notch bg-amber text-ink font-bold py-2.5 text-xs uppercase tracking-wider hover:opacity-90 transition-opacity shadow-md"
             >
-              {bonusRoll ? "Roll again — doubles!" : me.inJail ? "Roll for doubles" : "Roll dice"}
+              {bonusRoll ? "Roll doubles!" : me.inJail ? "Try doubles" : "Roll dice"}
             </button>
           )}
 
           {room.turnPhase === "rolled" && (
             <button
               onClick={onEndTurn}
-              className="notch bg-teal text-ink font-semibold py-3 text-sm hover:opacity-90 transition-opacity"
+              className="notch bg-teal text-ink font-bold py-2.5 text-xs uppercase tracking-wider hover:opacity-90 transition-opacity shadow-md"
             >
               End turn
             </button>
           )}
         </div>
       ) : (
-        <p className="text-sm text-slate">Waiting for {currentPlayer?.nickname ?? "the next player"}…</p>
+        <p className="text-xs text-slate">Waiting for {currentPlayer?.nickname ?? "player"}…</p>
       )}
     </div>
   );
@@ -281,32 +301,31 @@ function PlayerHud({ room, playerId, currentTurnId }: { room: Room; playerId: st
   const ownedCount = (pid: string) => Object.values(room.ownership).filter((id) => id === pid).length;
 
   return (
-    <div className="notch border border-ink-border bg-ink-raised p-4">
-      <p className="text-sm font-medium text-slate mb-3">Players</p>
-      <div className="flex flex-col gap-2">
+    <div className="notch border border-ink-border bg-ink-raised p-3 shrink-0">
+      <p className="text-xs font-semibold text-slate uppercase tracking-wider mb-2">Players</p>
+      <div className="flex flex-col gap-1.5">
         {room.players.map((p) => (
           <div
             key={p.id}
-            className={`notch-sm flex items-center gap-3 px-3 py-2 border ${
-              p.id === currentTurnId ? "border-amber bg-ink-raised-2" : "border-transparent"
+            className={`notch-sm flex items-center gap-2.5 px-2.5 py-1.5 border transition-colors ${
+              p.id === currentTurnId ? "border-amber bg-ink-raised-2" : "border-ink-border/50 bg-ink/40"
             } ${p.bankrupt ? "opacity-40" : ""}`}
           >
-            <AvatarBadge id={p.avatar} size={36} />
+            <AvatarBadge id={p.avatar} size={30} />
             <div className="min-w-0 flex-1">
               <div className="flex items-center gap-1.5">
-                <p className="text-sm font-medium text-parchment truncate">{p.nickname}</p>
-                {p.id === playerId && <span className="text-xs text-slate shrink-0">(you)</span>}
-                {p.id === currentTurnId && !p.bankrupt && <span className="text-xs text-amber shrink-0">●</span>}
+                <p className="text-xs font-semibold text-parchment truncate">{p.nickname}</p>
+                {p.id === playerId && <span className="text-[10px] text-slate shrink-0">(you)</span>}
+                {p.id === currentTurnId && !p.bankrupt && <span className="text-[10px] text-amber shrink-0">●</span>}
               </div>
-              <div className="flex items-center gap-2 text-xs text-slate">
+              <div className="flex items-center gap-2 text-[11px] text-slate font-mono">
                 {p.bankrupt ? (
                   <span className="text-signal">Bankrupt</span>
                 ) : (
                   <>
-                    <span className="tabular-nums text-parchment/90">${p.money.toLocaleString()}</span>
+                    <span className="text-parchment/90 font-medium">${p.money.toLocaleString()}</span>
                     {ownedCount(p.id) > 0 && <span>{ownedCount(p.id)} owned</span>}
-                    {p.inJail && <span className="text-signal">In Holding</span>}
-                    {!p.connected && <span>Reconnecting…</span>}
+                    {p.inJail && <span className="text-signal font-sans">Holding</span>}
                   </>
                 )}
               </div>
@@ -339,9 +358,9 @@ function PropertiesPanel({
   const properties = owned.filter((t): t is BoardTile & { group: string } => t.kind === "property" && Boolean(t.group));
 
   return (
-    <div className="notch border border-ink-border bg-ink-raised p-4">
-      <p className="text-sm font-medium text-slate mb-3">My properties</p>
-      <div className="flex flex-col gap-2">
+    <div className="notch border border-ink-border bg-ink-raised p-3 shrink-0">
+      <p className="text-xs font-semibold text-slate uppercase tracking-wider mb-2">My properties</p>
+      <div className="flex flex-col gap-2 max-h-48 overflow-y-auto pr-1">
         {owned.map((tile) => {
           const isProperty = tile.kind === "property";
           const houses = room.houses[tile.index] ?? 0;
@@ -352,28 +371,28 @@ function PropertiesPanel({
           const unmortgageCheck = checkCanUnmortgage(room, tile, me);
 
           return (
-            <div key={tile.index} className={`notch-sm border px-3 py-2 ${mortgaged ? "border-signal/50" : "border-ink-border"}`}>
+            <div key={tile.index} className={`notch-sm border px-2.5 py-1.5 bg-ink/30 ${mortgaged ? "border-signal/50" : "border-ink-border"}`}>
               <div className="flex items-center justify-between gap-2">
-                <div className="flex items-center gap-2 min-w-0">
+                <div className="flex items-center gap-1.5 min-w-0">
                   {tile.group && (
                     <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: groupColor(tile.group) }} />
                   )}
-                  <span className="text-sm text-parchment truncate">{tile.name}</span>
+                  <span className="text-xs text-parchment font-medium truncate">{tile.name}</span>
                 </div>
                 {mortgaged ? (
-                  <span className="text-xs text-signal shrink-0">Mortgaged</span>
+                  <span className="text-[10px] text-signal font-semibold shrink-0">Mortgaged</span>
                 ) : (
-                  houses > 0 && <span className="text-xs text-slate shrink-0">{houses >= 5 ? "Hotel" : `${houses}🏠`}</span>
+                  houses > 0 && <span className="text-[10px] text-amber font-mono shrink-0">{houses >= 5 ? "Hotel" : `${houses}🏠`}</span>
                 )}
               </div>
 
               {isProperty && !mortgaged && (
-                <div className="flex items-center gap-2 mt-2">
+                <div className="flex items-center gap-1.5 mt-1.5">
                   <button
                     onClick={() => onSell(tile.index)}
                     disabled={!sellCheck?.ok}
                     title={sellCheck?.reason}
-                    className="flex-1 notch-sm border border-ink-border py-1 text-xs text-parchment disabled:opacity-30 disabled:cursor-not-allowed hover:border-signal transition-colors"
+                    className="flex-1 notch-sm border border-ink-border py-0.5 text-[10px] text-parchment disabled:opacity-30 hover:border-signal transition-colors"
                   >
                     Sell {sellCheck?.cost !== undefined ? `+$${sellCheck.cost}` : ""}
                   </button>
@@ -381,20 +400,20 @@ function PropertiesPanel({
                     onClick={() => onBuild(tile.index)}
                     disabled={!buildCheck?.ok}
                     title={buildCheck?.reason}
-                    className="flex-1 notch-sm bg-amber text-ink py-1 text-xs font-medium disabled:opacity-30 disabled:cursor-not-allowed hover:opacity-90 transition-opacity"
+                    className="flex-1 notch-sm bg-amber text-ink py-0.5 text-[10px] font-bold disabled:opacity-30 hover:opacity-90 transition-opacity"
                   >
                     Build ${groupHouseCost(tile.group)}
                   </button>
                 </div>
               )}
 
-              <div className="flex items-center gap-2 mt-2">
+              <div className="flex items-center gap-1.5 mt-1">
                 {mortgaged ? (
                   <button
                     onClick={() => onUnmortgage(tile.index)}
                     disabled={!unmortgageCheck.ok}
                     title={unmortgageCheck.reason}
-                    className="flex-1 notch-sm border border-teal text-teal py-1 text-xs font-medium disabled:opacity-30 disabled:cursor-not-allowed hover:bg-teal/10 transition-colors"
+                    className="flex-1 notch-sm border border-teal text-teal py-0.5 text-[10px] font-semibold disabled:opacity-30 hover:bg-teal/10 transition-colors"
                   >
                     Unmortgage ${unmortgageCheck.amount ?? ""}
                   </button>
@@ -403,7 +422,7 @@ function PropertiesPanel({
                     onClick={() => onMortgage(tile.index)}
                     disabled={!mortgageCheck.ok}
                     title={mortgageCheck.reason}
-                    className="flex-1 notch-sm border border-ink-border py-1 text-xs text-slate disabled:opacity-30 disabled:cursor-not-allowed hover:border-amber hover:text-amber transition-colors"
+                    className="flex-1 notch-sm border border-ink-border py-0.5 text-[10px] text-slate disabled:opacity-30 hover:border-amber hover:text-amber transition-colors"
                   >
                     Mortgage +${mortgageCheck.amount ?? ""}
                   </button>
@@ -414,7 +433,7 @@ function PropertiesPanel({
         })}
       </div>
       {properties.length > 0 && !properties.some((t) => ownsWholeGroup(room, t, me.id)) && (
-        <p className="text-xs text-slate mt-1">Own every tile in a color group to build houses.</p>
+        <p className="text-[10px] text-slate mt-1.5 italic">Own all tiles in a group to build houses.</p>
       )}
     </div>
   );
@@ -428,11 +447,11 @@ function EventLog({ room }: { room: Room }) {
   }, [room.log.length]);
 
   return (
-    <div className="notch border border-ink-border bg-ink-raised p-4 flex flex-col min-h-0">
-      <p className="text-sm font-medium text-slate mb-3">Log</p>
-      <div ref={ref} className="flex flex-col gap-1.5 max-h-64 overflow-y-auto pr-1">
+    <div className="notch border border-ink-border bg-ink-raised p-3 shrink-0 flex flex-col max-h-36">
+      <p className="text-xs font-semibold text-slate uppercase tracking-wider mb-1.5">Game Log</p>
+      <div ref={ref} className="flex flex-col gap-1 overflow-y-auto pr-1">
         {room.log.map((entry) => (
-          <p key={entry.id} className="text-xs text-slate leading-relaxed">
+          <p key={entry.id} className="text-[11px] text-slate leading-normal">
             {entry.message}
           </p>
         ))}
