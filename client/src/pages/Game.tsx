@@ -50,8 +50,8 @@ export default function Game() {
           </div>
         </aside>
 
-        {/* COLUMN 2 (MIDDLE): Full Board */}
-        <main className="h-full min-h-0 min-w-0 flex items-center justify-center relative p-1 overflow-hidden">
+        {/* COLUMN 2 (MIDDLE): Full Board with Center Panel & Log */}
+        <main className="h-full min-h-0 min-w-0 flex items-center justify-center relative overflow-hidden">
           <Board players={room.players} ownership={room.ownership} houses={room.houses}>
             <CenterPanel
               room={room}
@@ -67,10 +67,10 @@ export default function Game() {
           </Board>
         </main>
 
-        {/* COLUMN 3 (RIGHT): Room info, Players, Trades, Properties, Event Log */}
-        <aside className="h-full min-h-0 flex flex-col gap-3 overflow-y-auto pr-1">
+        {/* COLUMN 3 (RIGHT): Room info, Players, Trades, Properties */}
+        <aside className="h-full min-h-0 flex flex-col gap-3 pr-1 overflow-hidden">
           {/* Room Code & Forfeit Card */}
-          <div className="border border-ink-border bg-ink-raised p-3 shrink-0 flex items-center justify-between">
+          <div className="notch border border-ink-border bg-ink-raised p-3 shrink-0 flex items-center justify-between">
             <span className="text-xs font-mono text-slate bg-ink/60 px-2 py-1 rounded border border-ink-border">
               Room {room.code}
             </span>
@@ -106,7 +106,6 @@ export default function Game() {
             onMortgage={mortgageProperty}
             onUnmortgage={unmortgageProperty}
           />
-          <EventLog room={room} />
         </aside>
       </div>
     </div>
@@ -196,12 +195,22 @@ function CenterPanel({
   onBuy: () => void;
   onPass: () => void;
 }) {
+  const [lastDice, setLastDice] = useState<{ die1: number; die2: number }>(() =>
+    room.lastRoll ? { die1: room.lastRoll.die1, die2: room.lastRoll.die2 } : { die1: 1, die2: 1 }
+  );
+
+  useEffect(() => {
+    if (room.lastRoll) {
+      setLastDice({ die1: room.lastRoll.die1, die2: room.lastRoll.die2 });
+    }
+  }, [room.lastRoll]);
+
   const bonusRoll = room.turnPhase === "rolling" && room.lastRoll?.isDoubles;
   const tile = tileAt(me.position);
 
   if (room.status === "finished") {
     return (
-      <div className="flex flex-col items-center gap-2 text-center max-w-[260px]">
+      <div className="flex flex-col items-center gap-2 text-center max-w-65">
         <Wordmark size="sm" />
         <p className="text-xs text-slate">Thanks for playing.</p>
       </div>
@@ -209,90 +218,117 @@ function CenterPanel({
   }
 
   return (
-    <div className="flex flex-col items-center justify-center gap-3 text-center w-full max-w-[260px] p-2">
-      <Wordmark size="sm" />
-
-      <div>
+    <div className="flex flex-col items-center justify-between h-full w-full max-w-70 p-2 min-h-0 overflow-hidden">
+      {/* Now Playing / Turn Info */}
+      <div className="text-center shrink-0 my-1">
         <p className="text-[10px] text-slate uppercase tracking-wider font-semibold">
           {isMyTurn ? "Your turn" : "Now playing"}
         </p>
-        <p className="font-display text-xl text-parchment leading-tight mt-0.5">
+        <p className="font-display text-lg text-parchment leading-tight mt-0.5">
           {isMyTurn ? "You" : currentPlayer?.nickname ?? "…"}
         </p>
         {room.settings.turnTimerEnabled && room.turnDeadline && <TurnCountdown deadline={room.turnDeadline} />}
       </div>
 
-      {room.lastRoll ? (
-        <Dice die1={room.lastRoll.die1} die2={room.lastRoll.die2} />
-      ) : (
-        <div className="h-10 flex items-center text-xs text-slate">Waiting to roll…</div>
-      )}
+      {/* Dice - Persistent last rolled values */}
+      <div className="shrink-0 my-1">
+        <Dice die1={lastDice.die1} die2={lastDice.die2} />
+      </div>
 
-      {me.bankrupt ? (
-        <p className="text-xs text-slate">You're out — spectating.</p>
-      ) : isMyTurn ? (
-        <div className="flex flex-col gap-2 w-full">
-          {room.turnPhase === "awaiting-purchase" && (
-            <div className="notch-sm border border-amber bg-ink-raised-2 p-2.5 flex flex-col gap-2">
-              <div>
-                <p className="text-xs text-parchment font-semibold truncate">{tileAt(me.position).name}</p>
-                <p className="text-[11px] text-amber font-mono">Buy for ${tileAt(me.position).price}?</p>
+      {/* Turn Action Controls */}
+      <div className="w-full shrink-0 mt-1">
+        {me.bankrupt ? (
+          <p className="text-xs text-slate text-center">You're out — spectating.</p>
+        ) : isMyTurn ? (
+          <div className="flex flex-col gap-1.5 w-full">
+            {room.turnPhase === "awaiting-purchase" && (
+              <div className="notch-sm border border-amber bg-ink-raised-2 p-2 flex flex-col gap-1.5">
+                <div className="text-center">
+                  <p className="text-xs text-parchment font-semibold truncate">{tileAt(me.position).name}</p>
+                  <p className="text-[11px] text-amber font-mono">Buy for ${tileAt(me.position).price}?</p>
+                </div>
+                <div className="flex gap-2">
+                  <button
+                    onClick={onPass}
+                    className="flex-1 notch-sm border border-ink-border py-1 text-xs text-parchment hover:border-signal transition-colors"
+                  >
+                    Pass
+                  </button>
+                  <button
+                    onClick={onBuy}
+                    disabled={me.money < (tile.price ?? 0)}
+                    className="flex-1 notch-sm bg-amber text-ink font-semibold py-1 text-xs disabled:opacity-40 disabled:cursor-not-allowed hover:opacity-90 transition-opacity"
+                  >
+                    Buy
+                  </button>
+                </div>
               </div>
-              <div className="flex gap-2">
-                <button
-                  onClick={onPass}
-                  className="flex-1 notch-sm border border-ink-border py-1.5 text-xs text-parchment hover:border-signal transition-colors"
-                >
-                  Pass
-                </button>
-                <button
-                  onClick={onBuy}
-                  disabled={me.money < (tile.price ?? 0)}
-                  className="flex-1 notch-sm bg-amber text-ink font-semibold py-1.5 text-xs disabled:opacity-40 disabled:cursor-not-allowed hover:opacity-90 transition-opacity"
-                >
-                  Buy
-                </button>
-              </div>
-            </div>
-          )}
+            )}
 
-          {me.inJail && room.turnPhase === "rolling" && (
-            <p className="text-[11px] text-slate leading-tight">
-              In Holding ({me.jailTurns}/3). Roll doubles or pay $50.
-            </p>
-          )}
+            {me.inJail && room.turnPhase === "rolling" && (
+              <p className="text-[10px] text-slate leading-tight text-center">
+                In Holding ({me.jailTurns}/3). Roll doubles or pay $50.
+              </p>
+            )}
 
-          {room.turnPhase === "rolling" && me.inJail && (
-            <button
-              onClick={onPayBail}
-              disabled={me.money < 50}
-              className="notch-sm border border-ink-border py-1.5 text-xs text-parchment hover:border-amber disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
-            >
-              Pay $50 &amp; roll
-            </button>
-          )}
+            {room.turnPhase === "rolling" && me.inJail && (
+              <button
+                onClick={onPayBail}
+                disabled={me.money < 50}
+                className="notch-sm border border-ink-border py-1 text-xs text-parchment hover:border-amber disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+              >
+                Pay $50 &amp; roll
+              </button>
+            )}
 
-          {room.turnPhase === "rolling" && (
-            <button
-              onClick={onRoll}
-              className="notch bg-amber text-ink font-bold py-2.5 text-xs uppercase tracking-wider hover:opacity-90 transition-opacity shadow-md"
-            >
-              {bonusRoll ? "Roll doubles!" : me.inJail ? "Try doubles" : "Roll dice"}
-            </button>
-          )}
+            {room.turnPhase === "rolling" && (
+              <button
+                onClick={onRoll}
+                className="notch bg-amber text-ink font-bold py-2 text-xs uppercase tracking-wider hover:opacity-90 transition-opacity shadow-md"
+              >
+                {bonusRoll ? "Roll doubles!" : me.inJail ? "Try doubles" : "Roll dice"}
+              </button>
+            )}
 
-          {room.turnPhase === "rolled" && (
-            <button
-              onClick={onEndTurn}
-              className="notch bg-teal text-ink font-bold py-2.5 text-xs uppercase tracking-wider hover:opacity-90 transition-opacity shadow-md"
-            >
-              End turn
-            </button>
-          )}
-        </div>
-      ) : (
-        <p className="text-xs text-slate">Waiting for {currentPlayer?.nickname ?? "player"}…</p>
-      )}
+            {room.turnPhase === "rolled" && (
+              <button
+                onClick={onEndTurn}
+                className="notch bg-teal text-ink font-bold py-2 text-xs uppercase tracking-wider hover:opacity-90 transition-opacity shadow-md"
+              >
+                End turn
+              </button>
+            )}
+          </div>
+        ) : (
+          <p className="text-xs text-slate text-center">Waiting for {currentPlayer?.nickname ?? "player"}…</p>
+        )}
+      </div>
+
+      {/* Game Log inside center of board */}
+      <CenterEventLog log={room.log} />
+    </div>
+  );
+}
+
+function CenterEventLog({ log }: { log: Room["log"] }) {
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (ref.current) ref.current.scrollTop = ref.current.scrollHeight;
+  }, [log.length]);
+
+  return (
+    <div className="w-full notch-sm border border-ink-border/60 bg-ink/70 p-2 flex flex-col min-h-0 flex-1 my-1">
+      <p className="text-[9px] font-semibold text-slate uppercase tracking-wider mb-1 text-center shrink-0">
+        Game Log
+      </p>
+      <div ref={ref} className="flex flex-col gap-1 overflow-y-auto pr-1 text-left min-h-0 flex-1">
+        {log.map((entry) => (
+          <p key={entry.id} className="text-[10px] text-slate leading-tight">
+            {entry.message}
+          </p>
+        ))}
+      </div>
     </div>
   );
 }
@@ -307,9 +343,8 @@ function PlayerHud({ room, playerId, currentTurnId }: { room: Room; playerId: st
         {room.players.map((p) => (
           <div
             key={p.id}
-            className={`notch-sm flex items-center gap-2.5 px-2.5 py-1.5 border transition-colors ${
-              p.id === currentTurnId ? "border-amber bg-ink-raised-2" : "border-ink-border/50 bg-ink/40"
-            } ${p.bankrupt ? "opacity-40" : ""}`}
+            className={`notch-sm flex items-center gap-2.5 px-2.5 py-1.5 border transition-colors ${p.id === currentTurnId ? "border-amber bg-ink-raised-2" : "border-ink-border/50 bg-ink/40"
+              } ${p.bankrupt ? "opacity-40" : ""}`}
           >
             <AvatarBadge id={p.avatar} size={30} />
             <div className="min-w-0 flex-1">
@@ -358,9 +393,9 @@ function PropertiesPanel({
   const properties = owned.filter((t): t is BoardTile & { group: string } => t.kind === "property" && Boolean(t.group));
 
   return (
-    <div className="notch border border-ink-border bg-ink-raised p-3 shrink-0">
-      <p className="text-xs font-semibold text-slate uppercase tracking-wider mb-2">My properties</p>
-      <div className="flex flex-col gap-2 max-h-48 overflow-y-auto pr-1">
+    <div className="notch border border-ink-border bg-ink-raised p-3 flex-1 min-h-0 flex flex-col">
+      <p className="text-xs font-semibold text-slate uppercase tracking-wider mb-2 shrink-0">My properties</p>
+      <div className="flex flex-col gap-2 flex-1 min-h-0 overflow-y-auto pr-1">
         {owned.map((tile) => {
           const isProperty = tile.kind === "property";
           const houses = room.houses[tile.index] ?? 0;
@@ -433,29 +468,8 @@ function PropertiesPanel({
         })}
       </div>
       {properties.length > 0 && !properties.some((t) => ownsWholeGroup(room, t, me.id)) && (
-        <p className="text-[10px] text-slate mt-1.5 italic">Own all tiles in a group to build houses.</p>
+        <p className="text-[10px] text-slate mt-1.5 italic shrink-0">Own all tiles in a group to build houses.</p>
       )}
-    </div>
-  );
-}
-
-function EventLog({ room }: { room: Room }) {
-  const ref = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    if (ref.current) ref.current.scrollTop = ref.current.scrollHeight;
-  }, [room.log.length]);
-
-  return (
-    <div className="notch border border-ink-border bg-ink-raised p-3 shrink-0 flex flex-col max-h-36">
-      <p className="text-xs font-semibold text-slate uppercase tracking-wider mb-1.5">Game Log</p>
-      <div ref={ref} className="flex flex-col gap-1 overflow-y-auto pr-1">
-        {room.log.map((entry) => (
-          <p key={entry.id} className="text-[11px] text-slate leading-normal">
-            {entry.message}
-          </p>
-        ))}
-      </div>
     </div>
   );
 }
