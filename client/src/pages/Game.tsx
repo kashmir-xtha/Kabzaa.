@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import Wordmark from "../components/Wordmark";
 import Dice from "../components/Dice";
 import Board from "../game/board/Board";
@@ -70,7 +70,7 @@ export default function Game() {
         {/* COLUMN 3 (RIGHT): Room info, Players, Trades, Properties */}
         <aside className="h-full min-h-0 flex flex-col gap-3 pr-1 overflow-hidden">
           {/* Room Code & Forfeit Card */}
-          <div className="notch border border-ink-border bg-ink-raised p-3 shrink-0 flex items-center justify-between">
+          <div className="border border-ink-border bg-ink-raised p-3 shrink-0 flex items-center justify-between">
             <span className="text-xs font-mono text-slate bg-ink/60 px-2 py-1 rounded border border-ink-border">
               Room {room.code}
             </span>
@@ -78,17 +78,17 @@ export default function Game() {
               confirmingForfeit ? (
                 <div className="flex items-center gap-2 text-xs bg-ink/60 border border-signal/40 px-2 py-0.5 rounded">
                   <span className="text-slate">Give up?</span>
-                  <button onClick={forfeitGame} className="text-signal font-semibold hover:underline">
+                  <button onClick={forfeitGame} className="cursor-pointer text-signal font-semibold hover:underline">
                     Yes
                   </button>
-                  <button onClick={() => setConfirmingForfeit(false)} className="text-slate hover:text-parchment">
+                  <button onClick={() => setConfirmingForfeit(false)} className="cursor-pointer text-slate hover:text-parchment">
                     No
                   </button>
                 </div>
               ) : (
                 <button
                   onClick={() => setConfirmingForfeit(true)}
-                  className="text-xs text-slate hover:text-signal transition-colors px-1 font-medium"
+                  className="cursor-pointer text-xs text-slate hover:text-signal transition-colors px-1 font-medium"
                 >
                   Forfeit
                 </button>
@@ -230,19 +230,19 @@ function CenterPanel({
         {room.settings.turnTimerEnabled && room.turnDeadline && <TurnCountdown deadline={room.turnDeadline} />}
       </div>
 
-      {/* Dice - Persistent last rolled values */}
-      <div className="shrink-0 my-1">
+      {/* 2. Dice - Persistent last rolled values */}
+      <div className="shrink-0">
         <Dice die1={lastDice.die1} die2={lastDice.die2} />
       </div>
 
-      {/* Turn Action Controls */}
-      <div className="w-full shrink-0 mt-1">
+      {/* 3. Turn Action Controls - Fixed Height to prevent movement during turn transitions */}
+      <div className="w-full shrink-0 h-22 my-2 flex flex-col justify-center">
         {me.bankrupt ? (
           <p className="text-xs text-slate text-center">You're out — spectating.</p>
         ) : isMyTurn ? (
           <div className="flex flex-col gap-1.5 w-full">
             {room.turnPhase === "awaiting-purchase" && (
-              <div className="notch-sm border border-amber bg-ink-raised-2 p-2 flex flex-col gap-1.5">
+              <div className="border border-amber bg-ink-raised-2 p-1.5 flex flex-col gap-1.5">
                 <div className="text-center">
                   <p className="text-xs text-parchment font-semibold truncate">{tileAt(me.position).name}</p>
                   <p className="text-[11px] text-amber font-mono">Buy for ${tileAt(me.position).price}?</p>
@@ -250,14 +250,14 @@ function CenterPanel({
                 <div className="flex gap-2">
                   <button
                     onClick={onPass}
-                    className="flex-1 notch-sm border border-ink-border py-1 text-xs text-parchment hover:border-signal transition-colors"
+                    className="flex-1 border border-ink-border py-1 text-xs text-parchment hover:border-signal transition-colors cursor-pointer"
                   >
                     Pass
                   </button>
                   <button
                     onClick={onBuy}
                     disabled={me.money < (tile.price ?? 0)}
-                    className="flex-1 notch-sm bg-amber text-ink font-semibold py-1 text-xs disabled:opacity-40 disabled:cursor-not-allowed hover:opacity-90 transition-opacity"
+                    className="flex-1 cursor-pointer bg-amber text-ink font-semibold py-1 text-xs disabled:opacity-40 disabled:cursor-not-allowed hover:opacity-90 transition-opacity"
                   >
                     Buy
                   </button>
@@ -266,7 +266,7 @@ function CenterPanel({
             )}
 
             {me.inJail && room.turnPhase === "rolling" && (
-              <p className="text-[10px] text-slate leading-tight text-center">
+              <p className="text-[10px] text-slate leading-tight text-center mb-1">
                 In Holding ({me.jailTurns}/3). Roll doubles or pay $50.
               </p>
             )}
@@ -284,7 +284,7 @@ function CenterPanel({
             {room.turnPhase === "rolling" && (
               <button
                 onClick={onRoll}
-                className="notch bg-amber text-ink font-bold py-2 text-xs uppercase tracking-wider hover:opacity-90 transition-opacity shadow-md"
+                className="cursor-pointer bg-amber text-ink font-bold py-2 text-xs uppercase tracking-wider hover:opacity-90 transition-opacity shadow-md"
               >
                 {bonusRoll ? "Roll doubles!" : me.inJail ? "Try doubles" : "Roll dice"}
               </button>
@@ -293,7 +293,7 @@ function CenterPanel({
             {room.turnPhase === "rolled" && (
               <button
                 onClick={onEndTurn}
-                className="notch bg-teal text-ink font-bold py-2 text-xs uppercase tracking-wider hover:opacity-90 transition-opacity shadow-md"
+                className="cursor-pointer bg-teal text-ink font-bold py-2 text-xs uppercase tracking-wider hover:opacity-90 transition-opacity shadow-md"
               >
                 End turn
               </button>
@@ -304,27 +304,22 @@ function CenterPanel({
         )}
       </div>
 
-      {/* Game Log inside center of board */}
+      {/* 4. Game Log - Fixed height of 240px with bottom blur mask & no scrollbars */}
       <CenterEventLog log={room.log} />
     </div>
   );
 }
 
 function CenterEventLog({ log }: { log: Room["log"] }) {
-  const ref = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    if (ref.current) ref.current.scrollTop = ref.current.scrollHeight;
-  }, [log.length]);
+  const reversedLog = [...log].reverse();
 
   return (
-    <div className="w-full notch-sm border border-ink-border/60 bg-ink/70 p-2 flex flex-col min-h-0 flex-1 my-1">
-      <p className="text-[9px] font-semibold text-slate uppercase tracking-wider mb-1 text-center shrink-0">
-        Game Log
-      </p>
-      <div ref={ref} className="flex flex-col gap-1 overflow-y-auto pr-1 text-left min-h-0 flex-1">
-        {log.map((entry) => (
-          <p key={entry.id} className="text-[10px] text-slate leading-tight">
+    <div className="w-full p-2.5 h-58 shrink-0 relative overflow-hidden">
+      <div 
+        className="h-full overflow-y-auto text-center flex flex-col gap-1.5 scrollbar-none [&::-webkit-scrollbar]:hidden mask-[linear-gradient(to_bottom,black_60%,transparent_100%)]"
+      >
+        {reversedLog.map((entry) => (
+          <p key={entry.id} className="text-[10px] text-slate leading-tight shrink-0">
             {entry.message}
           </p>
         ))}
@@ -343,8 +338,9 @@ function PlayerHud({ room, playerId, currentTurnId }: { room: Room; playerId: st
         {room.players.map((p) => (
           <div
             key={p.id}
-            className={`notch-sm flex items-center gap-2.5 px-2.5 py-1.5 border transition-colors ${p.id === currentTurnId ? "border-amber bg-ink-raised-2" : "border-ink-border/50 bg-ink/40"
-              } ${p.bankrupt ? "opacity-40" : ""}`}
+            className={`notch-sm flex items-center gap-2.5 px-2.5 py-1.5 border transition-colors ${
+              p.id === currentTurnId ? "border-amber bg-ink-raised-2" : "border-ink-border/50 bg-ink/40"
+            } ${p.bankrupt ? "opacity-40" : ""}`}
           >
             <AvatarBadge id={p.avatar} size={30} />
             <div className="min-w-0 flex-1">
