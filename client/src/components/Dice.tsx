@@ -1,3 +1,5 @@
+import { useEffect, useState, useRef } from "react";
+
 const PIP_LAYOUTS: Record<number, [number, number][]> = {
   1: [[1, 1]],
   2: [[0, 0], [2, 2]],
@@ -7,12 +9,13 @@ const PIP_LAYOUTS: Record<number, [number, number][]> = {
   6: [[0, 0], [0, 2], [1, 0], [1, 2], [2, 0], [2, 2]],
 };
 
-function Die({ value, rolling }: { value: number | null; rolling: boolean }) {
+function Die({ value, isRolling }: { value: number | null; isRolling: boolean }) {
   const shown = value ?? 1;
+
   return (
     <div
-      className={`w-14 h-14 rounded-lg bg-parchment border border-ink-border grid grid-cols-3 grid-rows-3 gap-1 p-2 shrink-0 ${
-        rolling ? "animate-[spin_0.5s_ease-in-out]" : ""
+      className={`relative w-14 h-14 rounded-lg bg-parchment border border-ink-border grid grid-cols-3 grid-rows-3 gap-1 p-2 shrink-0 select-none transition-transform ${
+        isRolling ? "animate-dice-shake-2d" : ""
       }`}
     >
       {Array.from({ length: 9 }).map((_, i) => {
@@ -38,10 +41,62 @@ export default function Dice({
   die2: number | null;
   rolling?: boolean;
 }) {
+  const [displayDie1, setDisplayDie1] = useState<number | null>(die1);
+  const [displayDie2, setDisplayDie2] = useState<number | null>(die2);
+  const [animating, setAnimating] = useState(false);
+  const isFirstRender = useRef(true);
+
+  useEffect(() => {
+    // Skip animation on initial mount unless explicitly requested
+    if (isFirstRender.current) {
+      isFirstRender.current = false;
+      if (!rolling) {
+        setDisplayDie1(die1);
+        setDisplayDie2(die2);
+        return;
+      }
+    }
+
+    setAnimating(true);
+
+    // Rapidly switch die faces in place during the roll
+    const interval = setInterval(() => {
+      setDisplayDie1(Math.floor(Math.random() * 6) + 1);
+      setDisplayDie2(Math.floor(Math.random() * 6) + 1);
+    }, 75);
+
+    // Settle on the actual rolled values after 500ms
+    const timeout = setTimeout(() => {
+      clearInterval(interval);
+      setDisplayDie1(die1);
+      setDisplayDie2(die2);
+      setAnimating(false);
+    }, 750);
+
+    return () => {
+      clearInterval(interval);
+      clearTimeout(timeout);
+    };
+  }, [die1, die2, rolling]);
+
   return (
     <div className="flex items-center gap-3">
-      <Die value={die1} rolling={rolling} />
-      <Die value={die2} rolling={rolling} />
+      <Die value={displayDie1} isRolling={animating || rolling} />
+      <Die value={displayDie2} isRolling={animating || rolling} />
+
+      <style>{`
+        @keyframes diceShake2D {
+          0% { transform: rotate(0deg); }
+          20% { transform: rotate(-8deg); }
+          40% { transform: rotate(10deg); }
+          60% { transform: rotate(-6deg); }
+          80% { transform: rotate(4deg); }
+          100% { transform: rotate(0deg); }
+        }
+        .animate-dice-shake-2d {
+          animation: diceShake2D 750ms ease-in-out infinite;
+        }
+      `}</style>
     </div>
   );
 }
