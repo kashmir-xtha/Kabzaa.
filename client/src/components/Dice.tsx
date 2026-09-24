@@ -44,17 +44,25 @@ export default function Dice({
   const [displayDie1, setDisplayDie1] = useState<number | null>(die1);
   const [displayDie2, setDisplayDie2] = useState<number | null>(die2);
   const [animating, setAnimating] = useState(false);
-  const isFirstRender = useRef(true);
+
+  const prevDiceRef = useRef<{ die1: number | null; die2: number | null }>({ die1, die2 });
+  const isInitialMount = useRef(true);
 
   useEffect(() => {
-    // Skip animation on initial mount unless explicitly requested
-    if (isFirstRender.current) {
-      isFirstRender.current = false;
-      if (!rolling) {
-        setDisplayDie1(die1);
-        setDisplayDie2(die2);
-        return;
-      }
+    const prev = prevDiceRef.current;
+    const valuesChanged =
+      prev.die1 !== null &&
+      prev.die2 !== null &&
+      (prev.die1 !== die1 || prev.die2 !== die2);
+
+    prevDiceRef.current = { die1, die2 };
+
+    // Skip animation on initial mount, on initial data hydration, or if values haven't changed and rolling is false
+    if (isInitialMount.current || (!valuesChanged && !rolling)) {
+      isInitialMount.current = false;
+      setDisplayDie1(die1);
+      setDisplayDie2(die2);
+      return;
     }
 
     setAnimating(true);
