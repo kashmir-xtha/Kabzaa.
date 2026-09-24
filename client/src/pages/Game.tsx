@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Wordmark from "../components/Wordmark";
 import Dice from "../components/Dice";
 import Board from "../game/board/Board";
@@ -328,6 +328,75 @@ function CenterEventLog({ log }: { log: Room["log"] }) {
   );
 }
 
+function PlayerMoneyDisplay({ money }: { money: number }) {
+  const [flash, setFlash] = useState<"gain" | "loss" | null>(null);
+  const [delta, setDelta] = useState<{ text: string; type: "gain" | "loss"; id: number } | null>(null);
+  const prevMoneyRef = useRef(money);
+
+  useEffect(() => {
+    const diff = money - prevMoneyRef.current;
+    if (diff !== 0) {
+      const type = diff > 0 ? "gain" : "loss";
+      const text = `${diff > 0 ? "+" : "-"}$${Math.abs(diff).toLocaleString()}`;
+
+      setFlash(type);
+      setDelta({ text, type, id: Date.now() });
+
+      prevMoneyRef.current = money;
+
+      const timer = setTimeout(() => {
+        setFlash(null);
+        setDelta(null);
+      }, 1000);
+
+      return () => clearTimeout(timer);
+    }
+  }, [money]);
+
+  const mainColorClass =
+    flash === "gain"
+      ? "text-teal font-bold scale-105"
+      : flash === "loss"
+      ? "text-signal font-bold scale-105"
+      : "text-parchment/90 font-medium";
+
+  return (
+    <span className="relative inline-block">
+      <span className={`transition-all duration-300 font-mono inline-block ${mainColorClass}`}>
+        ${money.toLocaleString()}
+      </span>
+
+      {delta && (
+        <span
+          key={delta.id}
+          className={`absolute left-0 pointer-events-none font-mono font-bold text-xs whitespace-nowrap ${
+            delta.type === "gain" ? "text-teal" : "text-signal"
+          }`}
+          style={{
+            top: "-0.25rem",
+            animation: "floatAndFade 1500ms cubic-bezier(0, 0, 0.2, 1) forwards",
+          }}
+        >
+          {delta.text}
+        </span>
+      )}
+
+      <style>{`
+        @keyframes floatAndFade {
+          0% {
+            transform: translateY(0);
+            opacity: 1;
+          }
+          100% {
+            transform: translateY(-1rem);
+            opacity: 0;
+          }
+        }
+      `}</style>
+    </span>
+  );
+}
+
 function PlayerHud({ room, playerId, currentTurnId }: { room: Room; playerId: string; currentTurnId: string }) {
   const ownedCount = (pid: string) => Object.values(room.ownership).filter((id) => id === pid).length;
 
@@ -354,7 +423,7 @@ function PlayerHud({ room, playerId, currentTurnId }: { room: Room; playerId: st
                   <span className="text-signal">Bankrupt</span>
                 ) : (
                   <>
-                    <span className="text-parchment/90 font-medium">${p.money.toLocaleString()}</span>
+                    <PlayerMoneyDisplay money={p.money} />
                     {ownedCount(p.id) > 0 && <span>{ownedCount(p.id)} owned</span>}
                     {p.inJail && <span className="text-signal font-sans">Holding</span>}
                   </>
