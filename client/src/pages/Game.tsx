@@ -28,16 +28,53 @@ export default function Game() {
   } = useRoom();
   const [confirmingForfeit, setConfirmingForfeit] = useState(false);
 
+  const [displayedRoom, setDisplayedRoom] = useState<Room | null>(room);
+  const [rollKey, setRollKey] = useState(0);
+
+  const prevRoomRef = useRef<Room | null>(null);
+  const pendingRoomRef = useRef<Room | null>(room);
+  const isRollingRef = useRef(false);
+
+  useEffect(() => {
+    if (!room) return;
+
+    const prevRoom = prevRoomRef.current;
+    pendingRoomRef.current = room;
+
+    const isNewRoll =
+      Boolean(room.lastRoll) &&
+      prevRoom?.turnPhase === "rolling" &&
+      room.lastRoll !== prevRoom?.lastRoll;
+
+    prevRoomRef.current = room;
+
+    if (isNewRoll) {
+      isRollingRef.current = true;
+      setRollKey((k) => k + 1);
+    } else if (!isRollingRef.current) {
+      setDisplayedRoom(room);
+    }
+  }, [room]);
+
+  const handleRollComplete = () => {
+    isRollingRef.current = false;
+    if (pendingRoomRef.current) {
+      setDisplayedRoom(pendingRoomRef.current);
+    }
+  };
+
   if (!room || !me || !playerId) return null;
 
-  const currentTurnId = room.turnOrder[room.currentTurnIndex];
-  const currentPlayer = room.players.find((p) => p.id === currentTurnId) ?? null;
+  const currentDisplayedRoom = displayedRoom ?? room;
+  const displayedMe = currentDisplayedRoom.players.find((p) => p.id === me.id) ?? me;
+  const currentTurnId = currentDisplayedRoom.turnOrder[currentDisplayedRoom.currentTurnIndex];
+  const currentPlayer = currentDisplayedRoom.players.find((p) => p.id === currentTurnId) ?? null;
   const isMyTurn = currentTurnId === playerId;
-  const gameOver = room.status === "finished";
+  const gameOver = currentDisplayedRoom.status === "finished";
 
   return (
     <div className="h-dvh w-screen overflow-hidden p-3 bg-ink text-parchment font-sans">
-      {gameOver && <GameOverBanner room={room} />}
+      {gameOver && <GameOverBanner room={currentDisplayedRoom} />}
 
       <div className="grid grid-cols-1 lg:grid-cols-[280px_1fr_320px] xl:grid-cols-[300px_1fr_340px] h-full w-full gap-3 md:gap-4 min-h-0 overflow-hidden">
         {/* COLUMN 1 (LEFT): Brand + Chat */}
@@ -46,23 +83,30 @@ export default function Game() {
             <Wordmark size="sm" />
           </div>
           <div className="flex-1 min-h-0 flex flex-col">
-            <Chat messages={room.chatMessages} myPlayerId={me.id} />
+            <Chat messages={currentDisplayedRoom.chatMessages} myPlayerId={displayedMe.id} />
           </div>
         </aside>
 
         {/* COLUMN 2 (MIDDLE): Full Board with Center Panel & Log */}
         <main className="h-full min-h-0 min-w-0 flex items-center justify-center relative overflow-hidden">
-          <Board players={room.players} ownership={room.ownership} houses={room.houses}>
+          <Board
+            players={currentDisplayedRoom.players}
+            ownership={currentDisplayedRoom.ownership}
+            houses={currentDisplayedRoom.houses}
+          >
             <CenterPanel
-              room={room}
+              room={currentDisplayedRoom}
+              latestLastRoll={room.lastRoll}
+              rollKey={rollKey}
               currentPlayer={currentPlayer}
               isMyTurn={isMyTurn && !gameOver}
-              me={me}
+              me={displayedMe}
               onRoll={rollDice}
               onPayBail={payBail}
               onEndTurn={endTurn}
               onBuy={buyProperty}
               onPass={passPurchase}
+              onRollComplete={handleRollComplete}
             />
           </Board>
         </main>
@@ -72,9 +116,9 @@ export default function Game() {
           {/* Room Code & Forfeit Card */}
           <div className="border border-ink-border bg-ink-raised p-3 shrink-0 flex items-center justify-between">
             <span className="text-xs font-mono text-slate bg-ink/60 px-2 py-1 rounded border border-ink-border">
-              Room {room.code}
+              Room {currentDisplayedRoom.code}
             </span>
-            {!me.bankrupt && !gameOver && (
+            {!displayedMe.bankrupt && !gameOver && (
               confirmingForfeit ? (
                 <div className="flex items-center gap-2 text-xs bg-ink/60 border border-signal/40 px-2 py-0.5 rounded">
                   <span className="text-slate">Give up?</span>
@@ -96,11 +140,11 @@ export default function Game() {
             )}
           </div>
 
-          <PlayerHud room={room} playerId={playerId} currentTurnId={currentTurnId} />
-          <TradePanel room={room} me={me} />
+          <PlayerHud room={currentDisplayedRoom} playerId={playerId} currentTurnId={currentTurnId} />
+          <TradePanel room={currentDisplayedRoom} me={displayedMe} />
           <PropertiesPanel
-            room={room}
-            me={me}
+            room={currentDisplayedRoom}
+            me={displayedMe}
             onBuild={buildHouse}
             onSell={sellHouse}
             onMortgage={mortgageProperty}
@@ -176,6 +220,8 @@ function TurnCountdown({ deadline }: { deadline: number }) {
 
 function CenterPanel({
   room,
+  latestLastRoll,
+  rollKey,
   currentPlayer,
   isMyTurn,
   me,
@@ -184,8 +230,11 @@ function CenterPanel({
   onEndTurn,
   onBuy,
   onPass,
+  onRollComplete,
 }: {
   room: Room;
+  latestLastRoll: Room["lastRoll"];
+  rollKey: number;
   currentPlayer: Player | null;
   isMyTurn: boolean;
   me: Player;
@@ -194,17 +243,8 @@ function CenterPanel({
   onEndTurn: () => void;
   onBuy: () => void;
   onPass: () => void;
+  onRollComplete: () => void;
 }) {
-  const [lastDice, setLastDice] = useState<{ die1: number; die2: number }>(() =>
-    room.lastRoll ? { die1: room.lastRoll.die1, die2: room.lastRoll.die2 } : { die1: 1, die2: 1 }
-  );
-
-  useEffect(() => {
-    if (room.lastRoll) {
-      setLastDice({ die1: room.lastRoll.die1, die2: room.lastRoll.die2 });
-    }
-  }, [room.lastRoll]);
-
   const bonusRoll = room.turnPhase === "rolling" && room.lastRoll?.isDoubles;
   const tile = tileAt(me.position);
 
@@ -219,7 +259,7 @@ function CenterPanel({
 
   return (
     <div className="flex flex-col items-center justify-between h-full w-full max-w-70 p-2 min-h-0 overflow-hidden">
-      {/* Now Playing / Turn Info */}
+      {/* 1. Now Playing / Turn Info */}
       <div className="text-center shrink-0 my-1">
         <p className="text-[10px] text-slate uppercase tracking-wider font-semibold">
           {isMyTurn ? "Your turn" : "Now playing"}
@@ -230,12 +270,17 @@ function CenterPanel({
         {room.settings.turnTimerEnabled && room.turnDeadline && <TurnCountdown deadline={room.turnDeadline} />}
       </div>
 
-      {/* 2. Dice - Persistent last rolled values */}
+      {/* 2. Dice - Passes null when lastRoll resets so Dice retains previous values */}
       <div className="shrink-0">
-        <Dice die1={lastDice.die1} die2={lastDice.die2} />
+        <Dice
+          die1={latestLastRoll?.die1 ?? null}
+          die2={latestLastRoll?.die2 ?? null}
+          rollKey={rollKey}
+          onRollComplete={onRollComplete}
+        />
       </div>
 
-      {/* 3. Turn Action Controls - Fixed Height to prevent movement during turn transitions */}
+      {/* 3. Turn Action Controls */}
       <div className="w-full shrink-0 h-22 my-2 flex flex-col justify-center">
         {me.bankrupt ? (
           <p className="text-xs text-slate text-center">You're out — spectating.</p>
@@ -304,7 +349,7 @@ function CenterPanel({
         )}
       </div>
 
-      {/* 4. Game Log - Fixed height of 240px with bottom blur mask & no scrollbars */}
+      {/* 4. Game Log */}
       <CenterEventLog log={room.log} />
     </div>
   );
