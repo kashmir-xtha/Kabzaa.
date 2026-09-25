@@ -36,56 +36,56 @@ export default function Dice({
   die1,
   die2,
   rolling = false,
+  rollKey,
+  onRollComplete,
 }: {
   die1: number | null;
   die2: number | null;
   rolling?: boolean;
+  rollKey?: number;
+  onRollComplete?: () => void;
 }) {
-  const [displayDie1, setDisplayDie1] = useState<number | null>(die1);
-  const [displayDie2, setDisplayDie2] = useState<number | null>(die2);
+  const [displayDie1, setDisplayDie1] = useState<number | null>(die1 ?? 1);
+  const [displayDie2, setDisplayDie2] = useState<number | null>(die2 ?? 1);
   const [animating, setAnimating] = useState(false);
 
-  const prevDiceRef = useRef<{ die1: number | null; die2: number | null }>({ die1, die2 });
-  const isInitialMount = useRef(true);
+  const prevRollKeyRef = useRef<number | undefined>(rollKey);
+  const onRollCompleteRef = useRef(onRollComplete);
 
   useEffect(() => {
-    const prev = prevDiceRef.current;
-    const valuesChanged =
-      prev.die1 !== null &&
-      prev.die2 !== null &&
-      (prev.die1 !== die1 || prev.die2 !== die2);
+    onRollCompleteRef.current = onRollComplete;
+  }, [onRollComplete]);
 
-    prevDiceRef.current = { die1, die2 };
-
-    // Skip animation on initial mount, on initial data hydration, or if values haven't changed and rolling is false
-    if (isInitialMount.current || (!valuesChanged && !rolling)) {
-      isInitialMount.current = false;
-      setDisplayDie1(die1);
-      setDisplayDie2(die2);
+  useEffect(() => {
+    // If rollKey hasn't changed, only update displayed numbers if valid values are passed.
+    // Retains previous values when room.lastRoll resets to null on End Turn.
+    if (rollKey === undefined || rollKey === prevRollKeyRef.current) {
+      if (die1 != null) setDisplayDie1(die1);
+      if (die2 != null) setDisplayDie2(die2);
       return;
     }
 
+    prevRollKeyRef.current = rollKey;
     setAnimating(true);
 
-    // Rapidly switch die faces in place during the roll
     const interval = setInterval(() => {
       setDisplayDie1(Math.floor(Math.random() * 6) + 1);
       setDisplayDie2(Math.floor(Math.random() * 6) + 1);
     }, 75);
 
-    // Settle on the actual rolled values after 500ms
     const timeout = setTimeout(() => {
       clearInterval(interval);
-      setDisplayDie1(die1);
-      setDisplayDie2(die2);
+      if (die1 != null) setDisplayDie1(die1);
+      if (die2 != null) setDisplayDie2(die2);
       setAnimating(false);
+      onRollCompleteRef.current?.();
     }, 750);
 
     return () => {
       clearInterval(interval);
       clearTimeout(timeout);
     };
-  }, [die1, die2, rolling]);
+  }, [die1, die2, rollKey]);
 
   return (
     <div className="flex items-center gap-3">
