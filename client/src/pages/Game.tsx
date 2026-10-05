@@ -10,6 +10,9 @@ import Chat from "../game/Chat";
 import { useRoom } from "../game/RoomContext";
 import type { Player, Room } from "../types";
 
+// Speed of token stepping (in milliseconds per tile)
+const STEP_MS = 120;
+
 export default function Game() {
   const {
     room,
@@ -58,9 +61,56 @@ export default function Game() {
 
   const handleRollComplete = () => {
     isRollingRef.current = false;
-    if (pendingRoomRef.current) {
-      setDisplayedRoom(pendingRoomRef.current);
+    const targetRoom = pendingRoomRef.current;
+    if (!targetRoom || !displayedRoom) {
+      if (targetRoom) setDisplayedRoom(targetRoom);
+      return;
     }
+
+    // Find the player whose position changed
+    const movingPlayerNewState = targetRoom.players.find((p) => {
+      const oldP = displayedRoom.players.find((old) => old.id === p.id);
+      return oldP && oldP.position !== p.position;
+    });
+
+    if (!movingPlayerNewState) {
+      setDisplayedRoom(targetRoom);
+      return;
+    }
+
+    const moverId = movingPlayerNewState.id;
+    const startPos = displayedRoom.players.find((p) => p.id === moverId)?.position ?? 0;
+    const targetPos = movingPlayerNewState.position;
+    const totalSteps = (targetPos - startPos + 40) % 40;
+
+    if (totalSteps === 0) {
+      setDisplayedRoom(targetRoom);
+      return;
+    }
+
+    // Step tile-by-tile from startPos to targetPos
+    let currentStep = 0;
+    const interval = setInterval(() => {
+      currentStep++;
+      const nextPos = (startPos + currentStep) % 40;
+
+      if (currentStep >= totalSteps) {
+        clearInterval(interval);
+        // Landed on final tile: show updated purchase prompt / log / state
+        setDisplayedRoom(targetRoom);
+      } else {
+        // Intermediate step: move token position without opening action prompts yet
+        setDisplayedRoom((prev) => {
+          if (!prev) return targetRoom;
+          return {
+            ...prev,
+            players: prev.players.map((p) =>
+              p.id === moverId ? { ...p, position: nextPos } : p
+            ),
+          };
+        });
+      }
+    }, STEP_MS);
   };
 
   if (!room || !me || !playerId) return null;
@@ -270,7 +320,7 @@ function CenterPanel({
         {room.settings.turnTimerEnabled && room.turnDeadline && <TurnCountdown deadline={room.turnDeadline} />}
       </div>
 
-      {/* 2. Dice - Passes null when lastRoll resets so Dice retains previous values */}
+      {/* 2. Dice */}
       <div className="shrink-0">
         <Dice
           die1={latestLastRoll?.die1 ?? null}
