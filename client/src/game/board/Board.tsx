@@ -38,17 +38,35 @@ export default function Board({
         const isCorner = tile.index % 10 === 0;
         const ownerId = ownership[tile.index];
         const owner = ownerId ? playerById.get(ownerId) : undefined;
+        const occupants = byPosition.get(tile.index) ?? [];
+
         return (
-          <div key={tile.index} style={{ gridRow: pos.row, gridColumn: pos.col }} className="min-w-0 min-h-0">
+          <div key={tile.index} style={{ gridRow: pos.row, gridColumn: pos.col }} className="min-w-0 min-h-0 relative">
             <Tile
               tile={tile}
               edge={edgeOf(tile.index)}
-              occupants={byPosition.get(tile.index) ?? []}
+              occupants={[]}
               isCorner={isCorner}
               ownerColor={owner ? avatarColor(owner.avatar) : undefined}
               ownerName={owner?.nickname}
               houses={houses[tile.index] ?? 0}
             />
+
+            {/* Absolute Center Token Color Dots (24px) */}
+            {occupants.length > 0 && (
+              <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-20">
+                <div className="flex items-center justify-center gap-1 p-1 bg-ink/80 backdrop-blur-xs rounded-full border border-ink-border/50 shadow-xl max-w-[90%] overflow-hidden">
+                  {occupants.map((p) => (
+                    <div
+                      key={p.id}
+                      className="w-3.5 h-3.5 rounded-full"
+                      style={{ backgroundColor: avatarColor(p.avatar) }}
+                      title={p.nickname}
+                    />
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
         );
       })}

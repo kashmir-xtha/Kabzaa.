@@ -191,8 +191,7 @@ function Occupants({ occupants }: { occupants: Player[] }) {
         <span
           key={p.id}
           title={p.nickname}
-          /* Add transition-all duration-100 ease-out to the className here: */
-          className="w-2 h-2 sm:w-2.5 sm:h-2.5 rounded-full border border-ink shrink-0 shadow-sm transition-all duration-100 ease-out"
+          className="w-2 h-2 sm:w-2.5 sm:h-2.5 rounded-full border border-ink shrink-0 shadow-sm"
           style={{ backgroundColor: avatarColor(p.avatar) }}
         />
       ))}
