@@ -2,7 +2,7 @@ import type { ReactNode } from "react";
 import { BOARD } from "./data";
 import { gridPosition, edgeOf } from "./layout";
 import Tile from "./Tile";
-import { avatarColor } from "../avatars";
+import { avatarColor, AvatarBadge } from "../avatars";
 import type { Player } from "../../types";
 
 export default function Board({
@@ -52,17 +52,19 @@ export default function Board({
               houses={houses[tile.index] ?? 0}
             />
 
-            {/* Absolute Center Token Color Dots (24px) */}
+            {/* Absolute Center Tokens with Avatar Geometry */}
             {occupants.length > 0 && (
               <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-20">
-                <div className="flex items-center justify-center gap-1 p-1 bg-ink/80 backdrop-blur-xs rounded-full border border-ink-border/50 shadow-xl max-w-[90%] overflow-hidden">
+                <div className="flex items-center justify-center gap-1 p-1 bg-ink/85 backdrop-blur-xs rounded-full border border-ink-border/50 shadow-xl max-w-[90%] overflow-hidden">
                   {occupants.map((p) => (
                     <div
                       key={p.id}
-                      className="w-3.5 h-3.5 rounded-full"
+                      className="w-5 h-5 rounded-full flex items-center justify-center shrink-0 shadow-md overflow-hidden"
                       style={{ backgroundColor: avatarColor(p.avatar) }}
                       title={p.nickname}
-                    />
+                    >
+                      <AvatarBadge id={p.avatar} size={32} />
+                    </div>
                   ))}
                 </div>
               </div>
