@@ -6,38 +6,52 @@ import Tile from "./Tile";
 import { avatarColor, AvatarBadge } from "../avatars";
 import type { Player, Room } from "../../types";
 
-// Helper to calculate or lookup the exact rent for a tile
+// Constants matching your backend economy
+const HOUSE_RENT_MULTIPLIERS = [5, 15, 45, 80, 125]; // Typical house multiplier schedule (adjust if your client board/data file has them exported)
+const HOTEL_LEVEL = 5;
+const TRANSIT_RENTS = [25, 50, 100, 200];
+const UTILITY_RENT_MULTIPLIER_ONE = 4;
+const UTILITY_RENT_MULTIPLIER_BOTH = 10;
+
+function ownedCountOfKind(ownership: Record<number, string>, ownerId: string, kind: BoardTile["kind"]): number {
+  return BOARD.filter((t) => t.kind === kind && ownership[t.index] === ownerId).length;
+}
+
+// Exact mirror of computeRent from backend economy.ts
 function getEffectiveRent(
   tile: BoardTile,
   ownerId?: string,
   houses: number = 0,
-  ownership?: Record<number, string>
+  ownership?: Record<number, string>,
+  room?: Room
 ): number | undefined {
-  if (!ownerId || tile.kind !== "property") return undefined;
+  if (!ownerId || !ownership) return undefined;
+  if (room && room.mortgaged && room.mortgaged[tile.index]) return 0;
 
-  // 1. If your tile definition has a rent property or rent array (e.g., base rent, house 1-4, hotel rent)
-  // @ts-ignore - checking custom schema fields safely
-  const rentData = tile.rent;
-  if (Array.isArray(rentData)) {
-    // Index 0: Base rent, Index 1-4: Houses 1-4, Index 5: Hotel
-    const tier = houses > 0 ? houses : (ownership && tile.group && ownsWholeGroup({ ownership } as Room, tile, ownerId) ? 1 : 0);
-    return rentData[Math.min(tier, rentData.length - 1)];
-  }
-  if (typeof rentData === "number") {
-    // If base rent is a flat number, scale with houses or monopoly status
-    let rent = rentData;
+  if (tile.kind === "property") {
+    const base = tile.rent ?? 0;
     if (houses > 0) {
-      rent *= Math.pow(2.5, houses); // Standard house multiplier curve
-    } else if (tile.group && ownership && ownsWholeGroup({ ownership } as Room, tile, ownerId)) {
+      const multiplier = HOUSE_RENT_MULTIPLIERS[Math.min(houses, HOTEL_LEVEL) - 1] ?? 5;
+      return base * multiplier;
     }
-    return Math.floor(rent);
+    const hasWholeGroup = room ? ownsWholeGroup(room, tile, ownerId) : false;
+    return hasWholeGroup ? base * 2 : base;
   }
 
-  // 3. Fallback standard estimation if explicit rent fields aren't on the tile object
-  const basePrice = tile.price ?? 60;
-  const baseRent = Math.floor(basePrice * 0.1);
-  if (houses > 0) return baseRent * (houses * 3);
-  return baseRent;
+  if (tile.kind === "transit") {
+    const count = ownedCountOfKind(ownership, ownerId, "transit");
+    return TRANSIT_RENTS[Math.min(Math.max(count - 1, 0), TRANSIT_RENTS.length - 1)] ?? 25;
+  }
+
+  if (tile.kind === "utility") {
+    const count = ownedCountOfKind(ownership, ownerId, "utility");
+    // Estimate using a default average dice roll (e.g., 7) for board display preview
+    const estimatedDiceTotal = 7; 
+    const multiplier = count >= 2 ? UTILITY_RENT_MULTIPLIER_BOTH : UTILITY_RENT_MULTIPLIER_ONE;
+    return estimatedDiceTotal * multiplier;
+  }
+
+  return undefined;
 }
 
 export default function Board({
@@ -59,6 +73,15 @@ export default function Board({
   });
   const playerById = new Map(players.map((p) => [p.id, p]));
 
+// Mock partial room object to satisfy ownsWholeGroup helper without TS complaints
+  const mockRoom = {
+    players,
+    ownership,
+    houses,
+    mortgaged: {},
+    mode: "standard",
+  } as unknown as Room;
+
   return (
     <div
       className="grid aspect-square h-full max-h-full max-w-full mx-auto bg-ink border border-ink-border rounded-lg p-1 shadow-2xl relative select-none shrink-0"
@@ -75,7 +98,7 @@ export default function Board({
         const owner = ownerId ? playerById.get(ownerId) : undefined;
         const occupants = byPosition.get(tile.index) ?? [];
         const tileHouses = houses[tile.index] ?? 0;
-        const currentRent = getEffectiveRent(tile, ownerId, tileHouses, ownership);
+        const currentRent = getEffectiveRent(tile, ownerId, tileHouses, ownership, mockRoom);
 
         return (
           <div key={tile.index} style={{ gridRow: pos.row, gridColumn: pos.col }} className="min-w-0 min-h-0 relative">
