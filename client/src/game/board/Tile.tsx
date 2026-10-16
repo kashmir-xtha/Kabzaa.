@@ -100,6 +100,7 @@ export default function Tile({
   ownerColor,
   ownerName,
   houses = 0,
+  rent,
 }: {
   tile: BoardTile;
   edge: Edge;
@@ -108,6 +109,7 @@ export default function Tile({
   ownerColor?: string;
   ownerName?: string;
   houses?: number;
+  rent?: number;
 }) {
   const base = "relative flex w-full h-full bg-ink-raised border border-ink-border/60 overflow-hidden";
   const ownerBadge = ownerColor ? (
@@ -134,6 +136,9 @@ export default function Tile({
 
   if (tile.kind === "property") {
     const barStyle = { [BAR_COLOR_PROP[edge]]: groupColor(tile.group) } as React.CSSProperties;
+    // Show rent if owned, otherwise show base price
+    const displayValue = ownerColor && rent !== undefined ? `Rent: $${rent}` : `$${tile.price}`;
+
     return (
       <div className={`${base} flex-col justify-between ${BAR_SIDE[edge]}`} style={barStyle}>
         {ownerBadge}
@@ -142,7 +147,9 @@ export default function Tile({
             {tile.name}
           </span>
           <HousesIndicator houses={houses} />
-          <span className="text-[7px] sm:text-[8px] font-mono text-slate">${tile.price}</span>
+          <span className={`text-[7px] sm:text-[8px] font-mono ${ownerColor ? "text-amber font-semibold" : "text-slate"}`}>
+            {displayValue}
+          </span>
           <Occupants occupants={occupants} />
         </div>
       </div>
@@ -159,7 +166,7 @@ export default function Tile({
         <TileIcon kind={tile.kind} />
       </div>
       <span className="text-[7.5px] sm:text-[8px] leading-tight text-parchment/80 line-clamp-2">{tile.name}</span>
-      {tile.kind === "tax" && <span className="text-[7px] font-mono text-slate">${tile.taxAmount}</span>}
+      {tile.kind === "tax" && <span className="text-[7px] font-mono text-slate">\${tile.taxAmount}</span>}
       <Occupants occupants={occupants} />
     </div>
   );

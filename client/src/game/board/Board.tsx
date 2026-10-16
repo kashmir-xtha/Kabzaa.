@@ -1,9 +1,44 @@
 import type { ReactNode } from "react";
-import { BOARD } from "./data";
+import { BOARD, type BoardTile } from "./data";
+import { ownsWholeGroup } from "./economy";
 import { gridPosition, edgeOf } from "./layout";
 import Tile from "./Tile";
 import { avatarColor, AvatarBadge } from "../avatars";
-import type { Player } from "../../types";
+import type { Player, Room } from "../../types";
+
+// Helper to calculate or lookup the exact rent for a tile
+function getEffectiveRent(
+  tile: BoardTile,
+  ownerId?: string,
+  houses: number = 0,
+  ownership?: Record<number, string>
+): number | undefined {
+  if (!ownerId || tile.kind !== "property") return undefined;
+
+  // 1. If your tile definition has a rent property or rent array (e.g., base rent, house 1-4, hotel rent)
+  // @ts-ignore - checking custom schema fields safely
+  const rentData = tile.rent;
+  if (Array.isArray(rentData)) {
+    // Index 0: Base rent, Index 1-4: Houses 1-4, Index 5: Hotel
+    const tier = houses > 0 ? houses : (ownership && tile.group && ownsWholeGroup({ ownership } as Room, tile, ownerId) ? 1 : 0);
+    return rentData[Math.min(tier, rentData.length - 1)];
+  }
+  if (typeof rentData === "number") {
+    // If base rent is a flat number, scale with houses or monopoly status
+    let rent = rentData;
+    if (houses > 0) {
+      rent *= Math.pow(2.5, houses); // Standard house multiplier curve
+    } else if (tile.group && ownership && ownsWholeGroup({ ownership } as Room, tile, ownerId)) {
+    }
+    return Math.floor(rent);
+  }
+
+  // 3. Fallback standard estimation if explicit rent fields aren't on the tile object
+  const basePrice = tile.price ?? 60;
+  const baseRent = Math.floor(basePrice * 0.1);
+  if (houses > 0) return baseRent * (houses * 3);
+  return baseRent;
+}
 
 export default function Board({
   players,
@@ -39,6 +74,8 @@ export default function Board({
         const ownerId = ownership[tile.index];
         const owner = ownerId ? playerById.get(ownerId) : undefined;
         const occupants = byPosition.get(tile.index) ?? [];
+        const tileHouses = houses[tile.index] ?? 0;
+        const currentRent = getEffectiveRent(tile, ownerId, tileHouses, ownership);
 
         return (
           <div key={tile.index} style={{ gridRow: pos.row, gridColumn: pos.col }} className="min-w-0 min-h-0 relative">
@@ -49,7 +86,8 @@ export default function Board({
               isCorner={isCorner}
               ownerColor={owner ? avatarColor(owner.avatar) : undefined}
               ownerName={owner?.nickname}
-              houses={houses[tile.index] ?? 0}
+              houses={tileHouses}
+              rent={currentRent}
             />
 
             {/* Absolute Center Tokens with Avatar Geometry */}
