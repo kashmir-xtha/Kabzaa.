@@ -6,8 +6,7 @@ import Tile from "./Tile";
 import { avatarColor, AvatarBadge } from "../avatars";
 import type { Player, Room } from "../../types";
 
-// Constants matching your backend economy
-const HOUSE_RENT_MULTIPLIERS = [5, 15, 45, 80, 125]; // Typical house multiplier schedule (adjust if your client board/data file has them exported)
+const HOUSE_RENT_MULTIPLIERS = [5, 15, 45, 80, 125];
 const HOTEL_LEVEL = 5;
 const TRANSIT_RENTS = [25, 50, 100, 200];
 const UTILITY_RENT_MULTIPLIER_ONE = 4;
@@ -17,7 +16,6 @@ function ownedCountOfKind(ownership: Record<number, string>, ownerId: string, ki
   return BOARD.filter((t) => t.kind === kind && ownership[t.index] === ownerId).length;
 }
 
-// Exact mirror of computeRent from backend economy.ts
 function getEffectiveRent(
   tile: BoardTile,
   ownerId?: string,
@@ -45,8 +43,7 @@ function getEffectiveRent(
 
   if (tile.kind === "utility") {
     const count = ownedCountOfKind(ownership, ownerId, "utility");
-    // Estimate using a default average dice roll (e.g., 7) for board display preview
-    const estimatedDiceTotal = 7; 
+    const estimatedDiceTotal = 7;
     const multiplier = count >= 2 ? UTILITY_RENT_MULTIPLIER_BOTH : UTILITY_RENT_MULTIPLIER_ONE;
     return estimatedDiceTotal * multiplier;
   }
@@ -73,7 +70,6 @@ export default function Board({
   });
   const playerById = new Map(players.map((p) => [p.id, p]));
 
-// Mock partial room object to satisfy ownsWholeGroup helper without TS complaints
   const mockRoom = {
     players,
     ownership,
@@ -113,18 +109,21 @@ export default function Board({
               rent={currentRent}
             />
 
-            {/* Absolute Center Tokens with Avatar Geometry */}
+            {/* Overlapping Stacked Token Layout */}
             {occupants.length > 0 && (
               <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-20">
-                <div className="flex items-center justify-center gap-1 p-1 bg-ink/85 backdrop-blur-xs rounded-full border border-ink-border/50 shadow-xl max-w-[90%] overflow-hidden">
-                  {occupants.map((p) => (
+                <div className="flex items-center justify-center -space-x-2.5">
+                  {occupants.map((p, index) => (
                     <div
                       key={p.id}
-                      className="w-5 h-5 rounded-full flex items-center justify-center shrink-0 shadow-md overflow-hidden"
-                      style={{ backgroundColor: avatarColor(p.avatar) }}
+                      className="w-6 h-6 rounded-full border-2 border-gray-300 flex items-center justify-center shrink-0 shadow-md overflow-hidden pointer-events-auto transition-transform hover:scale-110 hover:z-30"
+                      style={{
+                        backgroundColor: avatarColor(p.avatar),
+                        zIndex: index,
+                      }}
                       title={p.nickname}
                     >
-                      <AvatarBadge id={p.avatar} size={32} />
+                      <AvatarBadge id={p.avatar} size={36} />
                     </div>
                   ))}
                 </div>

@@ -137,7 +137,7 @@ export default function Tile({
   if (tile.kind === "property") {
     const barStyle = { [BAR_COLOR_PROP[edge]]: groupColor(tile.group) } as React.CSSProperties;
     // Show rent if owned, otherwise show base price
-    const displayValue = ownerColor && rent !== undefined ? `Rent: $${rent}` : `$${tile.price}`;
+    const displayValue = ownerColor && rent !== undefined ? `$${rent}` : `$${tile.price}`;
 
     return (
       <div className={`${base} flex-col justify-between ${BAR_SIDE[edge]}`} style={barStyle}>
@@ -147,7 +147,11 @@ export default function Tile({
             {tile.name}
           </span>
           <HousesIndicator houses={houses} />
-          <span className={`text-[7px] sm:text-[8px] font-mono ${ownerColor ? "text-amber font-semibold" : "text-slate"}`}>
+          {/* Rent text now uses ownerColor dynamically */}
+          <span 
+            className={`text-[9px] font-mono ${ownerColor ? "font-semibold" : "text-slate"}`}
+            style={ownerColor ? { color: ownerColor } : undefined}
+          >
             {displayValue}
           </span>
           <Occupants occupants={occupants} />
