@@ -112,7 +112,7 @@ export default function Board({
             {/* Overlapping Stacked Token Layout */}
             {occupants.length > 0 && (
               <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-20">
-                <div className="flex items-center justify-center -space-x-2.5">
+                <div className="flex items-center justify-center -space-x-4">
                   {occupants.map((p, index) => (
                     <div
                       key={p.id}
@@ -123,7 +123,7 @@ export default function Board({
                       }}
                       title={p.nickname}
                     >
-                      <AvatarBadge id={p.avatar} size={36} />
+                      <AvatarBadge id={p.avatar} size={32} />
                     </div>
                   ))}
                 </div>

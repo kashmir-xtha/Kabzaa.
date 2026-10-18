@@ -71,7 +71,7 @@ export default function Dice({
     const interval = setInterval(() => {
       setDisplayDie1(Math.floor(Math.random() * 6) + 1);
       setDisplayDie2(Math.floor(Math.random() * 6) + 1);
-    }, 75);
+    }, 50);
 
     const timeout = setTimeout(() => {
       clearInterval(interval);
@@ -79,7 +79,7 @@ export default function Dice({
       if (die2 != null) setDisplayDie2(die2);
       setAnimating(false);
       onRollCompleteRef.current?.();
-    }, 750);
+    }, 500);
 
     return () => {
       clearInterval(interval);
@@ -102,7 +102,7 @@ export default function Dice({
           100% { transform: rotate(0deg); }
         }
         .animate-dice-shake-2d {
-          animation: diceShake2D 750ms ease-in-out infinite;
+          animation: diceShake2D 500ms ease-in-out infinite;
         }
       `}</style>
     </div>

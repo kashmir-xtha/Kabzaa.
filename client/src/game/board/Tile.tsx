@@ -18,6 +18,14 @@ const BAR_COLOR_PROP: Record<Edge, string> = {
   right: "borderLeftColor",
 };
 
+// Explicitly match tiles by name for the flag background
+function getTileFlag(tileName: string): string | undefined {
+  if (tileName === "Cinder Row" || tileName === "Ashline Alley") {
+    return "/flags/nepal.png"; // Ensure nepal.png is placed in your public/flags folder
+  }
+  return undefined;
+}
+
 function TileIcon({ kind }: { kind: BoardTile["kind"] }) {
   const common = { fill: "none", stroke: "currentColor", strokeWidth: 1.6, strokeLinecap: "round" as const, strokeLinejoin: "round" as const };
   switch (kind) {
@@ -115,7 +123,7 @@ export default function Tile({
   const ownerBadge = ownerColor ? (
     <span
       title={ownerName ? `Owned by ${ownerName}` : undefined}
-      className="absolute top-0.5 right-0.5 w-1.5 h-1.5 rounded-full ring-1 ring-ink"
+      className="absolute top-0.5 right-0.5 w-1.5 h-1.5 rounded-full ring-1 ring-ink z-20"
       style={{ backgroundColor: ownerColor }}
     />
   ) : null;
@@ -136,20 +144,26 @@ export default function Tile({
 
   if (tile.kind === "property") {
     const barStyle = { [BAR_COLOR_PROP[edge]]: groupColor(tile.group) } as React.CSSProperties;
-    // Show rent if owned, otherwise show base price
     const displayValue = ownerColor && rent !== undefined ? `$${rent}` : `$${tile.price}`;
+    const flagSrc = getTileFlag(tile.name);
 
     return (
       <div className={`${base} flex-col justify-between ${BAR_SIDE[edge]}`} style={barStyle}>
+        {/* Background flag layer */}
+        {flagSrc && (
+          <div className="absolute inset-0 opacity-25 pointer-events-none flex items-center justify-center z-0">
+            <img src={flagSrc} alt="" className="w-full h-full object-cover" />
+          </div>
+        )}
+
         {ownerBadge}
-        <div className="p-0.5 flex flex-col justify-between h-full w-full" title={tile.name}>
-          <span className="text-[7.5px] sm:text-[8.5px] leading-tight font-medium text-parchment/90 line-clamp-2">
+        <div className="p-0.5 flex flex-col justify-between h-full w-full relative z-10" title={tile.name}>
+          <span className="text-[7.5px] sm:text-[8.5px] leading-tight font-medium text-parchment/90 line-clamp-2 drop-shadow-xs">
             {tile.name}
           </span>
           <HousesIndicator houses={houses} />
-          {/* Rent text now uses ownerColor dynamically */}
           <span 
-            className={`text-[9px] font-mono ${ownerColor ? "font-semibold" : "text-slate"}`}
+            className={`text-[9px] font-mono ${ownerColor ? "font-semibold" : "text-parchment/90 font-medium drop-shadow-xs"}`}
             style={ownerColor ? { color: ownerColor } : undefined}
           >
             {displayValue}
