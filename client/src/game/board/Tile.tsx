@@ -20,9 +20,10 @@ const BAR_COLOR_PROP: Record<Edge, string> = {
 
 // Explicitly match tiles by name for the flag background
 function getTileFlag(tileName: string): string | undefined {
-  if (tileName === "Cinder Row" || tileName === "Ashline Alley") {
+  if (tileName === "Kathmandu" || tileName === "Pokhara") {
     return "/flags/nepal.png"; // Ensure nepal.png is placed in your public/flags folder
   }
+  if (tileName === "Moscow")
   return undefined;
 }
 
