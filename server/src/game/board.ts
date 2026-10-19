@@ -28,7 +28,7 @@ export interface GroupInfo {
 }
 
 export const GROUPS: GroupInfo[] = [
-  { id: "ash", color: "#8B6F52", label: "Ash", houseCost: 50 },
+  { id: "ash", color: "#808080", label: "Ash", houseCost: 50 },
   { id: "cove", color: "#5AA9D6", label: "Cove", houseCost: 50 },
   { id: "orchid", color: "#C9599C", label: "Orchid", houseCost: 100 },
   { id: "marigold", color: "#E8963D", label: "Marigold", houseCost: 100 },

@@ -28,7 +28,7 @@ export interface GroupInfo {
 }
 
 export const GROUPS: GroupInfo[] = [
-  { id: "ash", color: "#8B6F52", label: "Ash", houseCost: 50 },
+  { id: "ash", color: "#808080", label: "Ash", houseCost: 50 },
   { id: "cove", color: "#5AA9D6", label: "Cove", houseCost: 50 },
   { id: "orchid", color: "#C9599C", label: "Orchid", houseCost: 100 },
   { id: "marigold", color: "#E8963D", label: "Marigold", houseCost: 100 },
@@ -98,10 +98,10 @@ export const BOARD: BoardTile[] = [
   { index: 39, kind: "property", name: "New York", group: "sapphire", price: 400, rent: 50 },
 ];
 
+export const TRANSIT_RENTS = [25, 50, 100, 200];
+export const UTILITY_RENT_MULTIPLIER_ONE = 4;
+export const UTILITY_RENT_MULTIPLIER_BOTH = 10;
+
 export function tileAt(index: number): BoardTile {
   return BOARD[((index % 40) + 40) % 40];
-}
-
-export function isPurchasable(tile: BoardTile): boolean {
-  return (tile.kind === "property" || tile.kind === "transit" || tile.kind === "utility") && tile.price !== undefined;
 }

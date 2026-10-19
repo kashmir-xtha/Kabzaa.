@@ -1,5 +1,4 @@
 import type { BoardTile } from "./data";
-import { groupColor } from "./data";
 import type { Edge } from "./layout";
 import { avatarColor } from "../avatars";
 import type { Player } from "../../types";
@@ -21,24 +20,24 @@ const BAR_COLOR_PROP: Record<Edge, string> = {
 // Explicitly match tiles by name for the flag background
 function getTileFlag(tileName: string): string | undefined {
   if (tileName === "Kathmandu" || tileName === "Pokhara") {
-    return "/flags/nepal.png"; // Ensure nepal.png is placed in your public/flags folder
+    return "/flags/nepal.png";
   }
-  if (tileName === "Moscow" || tileName == "St. Petersburg" || tileName == "Kazan") {
+  if (tileName === "Moscow" || tileName === "St. Petersburg" || tileName === "Kazan") {
     return "/flags/russia.png";
   }
-  if (tileName === "Madrid" || tileName == "Barcelona" || tileName == "Valencia") {
+  if (tileName === "Madrid" || tileName === "Barcelona" || tileName === "Valencia") {
     return "/flags/spain.png";
   }
-  if (tileName === "Munich" || tileName == "Frankfurt" || tileName == "Berlin") {
+  if (tileName === "Munich" || tileName === "Frankfurt" || tileName === "Berlin") {
     return "/flags/germany.png";
   }
-  if (tileName === "Tokyo" || tileName == "Yokohama" || tileName == "Osaka") {
+  if (tileName === "Tokyo" || tileName === "Yokohama" || tileName === "Osaka") {
     return "/flags/japan.png";
   }
-  if (tileName === "London" || tileName == "Manchester" || tileName == "Birmingham") {
+  if (tileName === "London" || tileName === "Manchester" || tileName === "Birmingham") {
     return "/flags/uk.png";
   }
-  if (tileName === "Dubai" || tileName == "Abu Dhabi" || tileName == "Sharjah") {
+  if (tileName === "Dubai" || tileName === "Abu Dhabi" || tileName === "Sharjah") {
     return "/flags/uae.png";
   }
   if (tileName === "New York" || tileName === "Los Angeles") {
@@ -141,13 +140,6 @@ export default function Tile({
   rent?: number;
 }) {
   const base = "relative flex w-full h-full bg-ink-raised border border-ink-border/60 overflow-hidden";
-  const ownerBadge = ownerColor ? (
-    <span
-      title={ownerName ? `Owned by ${ownerName}` : undefined}
-      className="absolute top-0.5 right-0.5 w-1.5 h-1.5 rounded-full ring-1 ring-ink z-20"
-      style={{ backgroundColor: ownerColor }}
-    />
-  ) : null;
 
   if (isCorner) {
     return (
@@ -164,7 +156,9 @@ export default function Tile({
   }
 
   if (tile.kind === "property") {
-    const barStyle = { [BAR_COLOR_PROP[edge]]: groupColor(tile.group) } as React.CSSProperties;
+    // Uses default #808080 dash when unowned, and switches to ownerColor when purchased
+    const dashColor = ownerColor || "#808080";
+    const barStyle = { [BAR_COLOR_PROP[edge]]: dashColor } as React.CSSProperties;
     const displayValue = ownerColor && rent !== undefined ? `$${rent}` : `$${tile.price}`;
     const flagSrc = getTileFlag(tile.name);
 
@@ -177,8 +171,7 @@ export default function Tile({
           </div>
         )}
 
-        {ownerBadge}
-        <div className="p-0.5 flex flex-col justify-between h-full w-full relative z-10" title={tile.name}>
+        <div className="p-0.5 flex flex-col justify-between h-full w-full relative z-10" title={ownerName ? `${tile.name} (Owned by ${ownerName})` : tile.name}>
           <span className="text-[7.5px] sm:text-[8.5px] leading-tight font-medium text-parchment/90 line-clamp-2 drop-shadow-xs">
             {tile.name}
           </span>
@@ -200,11 +193,10 @@ export default function Tile({
 
   return (
     <div className={`${base} flex-col items-center justify-center gap-0.5 text-center p-0.5`} title={tile.name}>
-      {ownerBadge}
       <div className={tint}>
         <TileIcon kind={tile.kind} />
       </div>
-      <span className="text-[7.5px] sm:text-[8px] leading-tight text-parchment/80 line-clamp-2">{tile.name}</span>
+      <span className="text-[7.5px] sm:text-[8.5px] leading-tight text-parchment/80 line-clamp-2">{tile.name}</span>
       {tile.kind === "tax" && <span className="text-[7px] font-mono text-slate">\${tile.taxAmount}</span>}
       <Occupants occupants={occupants} />
     </div>
