@@ -23,7 +23,27 @@ function getTileFlag(tileName: string): string | undefined {
   if (tileName === "Kathmandu" || tileName === "Pokhara") {
     return "/flags/nepal.png"; // Ensure nepal.png is placed in your public/flags folder
   }
-  if (tileName === "Moscow")
+  if (tileName === "Moscow" || tileName == "St. Petersburg" || tileName == "Kazan") {
+    return "/flags/russia.png";
+  }
+  if (tileName === "Madrid" || tileName == "Barcelona" || tileName == "Valencia") {
+    return "/flags/spain.png";
+  }
+  if (tileName === "Munich" || tileName == "Frankfurt" || tileName == "Berlin") {
+    return "/flags/germany.png";
+  }
+  if (tileName === "Tokyo" || tileName == "Yokohama" || tileName == "Osaka") {
+    return "/flags/japan.png";
+  }
+  if (tileName === "London" || tileName == "Manchester" || tileName == "Birmingham") {
+    return "/flags/uk.png";
+  }
+  if (tileName === "Dubai" || tileName == "Abu Dhabi" || tileName == "Sharjah") {
+    return "/flags/uae.png";
+  }
+  if (tileName === "New York" || tileName === "Los Angeles") {
+    return "/flags/usa.png";
+  }
   return undefined;
 }
 
@@ -152,7 +172,7 @@ export default function Tile({
       <div className={`${base} flex-col justify-between ${BAR_SIDE[edge]}`} style={barStyle}>
         {/* Background flag layer */}
         {flagSrc && (
-          <div className="absolute inset-0 opacity-25 pointer-events-none flex items-center justify-center z-0">
+          <div className="absolute inset-0 opacity-30 pointer-events-none flex items-center justify-center z-0">
             <img src={flagSrc} alt="" className="w-full h-full object-cover" />
           </div>
         )}
