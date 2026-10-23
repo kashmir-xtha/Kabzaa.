@@ -31,35 +31,34 @@ export default function Game() {
   const [displayedRoom, setDisplayedRoom] = useState<Room | null>(room);
   const [rollKey, setRollKey] = useState(0);
 
-  const prevRoomRef = useRef<Room | null>(null);
+  const prevRollRef = useRef<Room["lastRoll"]>(null);
+  const isRollingLocallyRef = useRef(false);
   const pendingRoomRef = useRef<Room | null>(room);
-  const isRollingRef = useRef(false);
 
   useEffect(() => {
     if (!room) return;
-
-    const prevRoom = prevRoomRef.current;
     pendingRoomRef.current = room;
 
+    // Check if a brand new roll result has arrived from the server
     const isNewRoll =
       Boolean(room.lastRoll) &&
-      prevRoom?.turnPhase === "rolling" &&
-      room.lastRoll !== prevRoom?.lastRoll;
-
-    prevRoomRef.current = room;
+      room.lastRoll !== prevRollRef.current;
 
     if (isNewRoll) {
-      isRollingRef.current = true;
-      setRollKey((k) => k + 1);
-    } else if (!isRollingRef.current) {
+      prevRollRef.current = room.lastRoll;
+      isRollingLocallyRef.current = true;
+      setRollKey((k) => k + 1); // Triggers Dice.tsx 500ms animation
+    } else if (!isRollingLocallyRef.current) {
+      // If we are not actively animating a roll, sync state instantly
       setDisplayedRoom(room);
     }
   }, [room]);
 
+  // Called strictly after Dice.tsx finishes its 500ms animation
   const handleRollComplete = () => {
-    isRollingRef.current = false;
+    isRollingLocallyRef.current = false;
     if (pendingRoomRef.current) {
-      setDisplayedRoom(pendingRoomRef.current);
+      setDisplayedRoom(pendingRoomRef.current); // Now tokens, logs, and money update!
     }
   };
 
@@ -270,7 +269,7 @@ function CenterPanel({
         {room.settings.turnTimerEnabled && room.turnDeadline && <TurnCountdown deadline={room.turnDeadline} />}
       </div>
 
-      {/* 2. Dice - Passes null when lastRoll resets so Dice retains previous values */}
+      {/* 2. Dice - Passes live latestLastRoll so it animates to the right values, triggers onRollComplete */}
       <div className="shrink-0">
         <Dice
           die1={latestLastRoll?.die1 ?? null}

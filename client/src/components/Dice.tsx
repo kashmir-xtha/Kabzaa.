@@ -57,11 +57,10 @@ export default function Dice({
   }, [onRollComplete]);
 
   useEffect(() => {
-    // If rollKey hasn't changed, only update displayed numbers if valid values are passed.
-    // Retains previous values when room.lastRoll resets to null on End Turn.
+    // If rollKey hasn't changed, just sync static values
     if (rollKey === undefined || rollKey === prevRollKeyRef.current) {
-      if (die1 != null) setDisplayDie1(die1);
-      if (die2 != null) setDisplayDie2(die2);
+      if (die1 != null && !animating) setDisplayDie1(die1);
+      if (die2 != null && !animating) setDisplayDie2(die2);
       return;
     }
 
@@ -79,13 +78,13 @@ export default function Dice({
       if (die2 != null) setDisplayDie2(die2);
       setAnimating(false);
       onRollCompleteRef.current?.();
-    }, 500);
+    }, 500); // Exactly 500ms rolling animation
 
     return () => {
       clearInterval(interval);
       clearTimeout(timeout);
     };
-  }, [die1, die2, rollKey]);
+  }, [rollKey]); // intentionally removed die1, die2 to prevent mid-animation resets
 
   return (
     <div className="flex items-center gap-3">
