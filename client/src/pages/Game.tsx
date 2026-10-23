@@ -31,7 +31,7 @@ export default function Game() {
   const [displayedRoom, setDisplayedRoom] = useState<Room | null>(room);
   const [rollKey, setRollKey] = useState(0);
 
-  const prevRollRef = useRef<Room["lastRoll"]>(null);
+  const prevRollSignatureRef = useRef<string | null>(null);
   const isRollingLocallyRef = useRef(false);
   const pendingRoomRef = useRef<Room | null>(room);
 
@@ -39,26 +39,42 @@ export default function Game() {
     if (!room) return;
     pendingRoomRef.current = room;
 
-    // Check if a brand new roll result has arrived from the server
+    // Create a unique primitive signature for the current roll (dice + turn index)
+    const currentRollSignature = room.lastRoll
+      ? `${room.lastRoll.die1}-${room.lastRoll.die2}-${room.currentTurnIndex}`
+      : null;
+
+    // Detect if this is a truly new roll by comparing primitive strings
     const isNewRoll =
       Boolean(room.lastRoll) &&
-      room.lastRoll !== prevRollRef.current;
+      currentRollSignature !== prevRollSignatureRef.current;
 
     if (isNewRoll) {
-      prevRollRef.current = room.lastRoll;
+      prevRollSignatureRef.current = currentRollSignature;
       isRollingLocallyRef.current = true;
-      setRollKey((k) => k + 1); // Triggers Dice.tsx 500ms animation
+      setRollKey((k) => k + 1);
+
+      // Safety fallback timer: auto-unlocks after 2s if animation callback fails
+      const safetyTimer = setTimeout(() => {
+        if (isRollingLocallyRef.current) {
+          isRollingLocallyRef.current = false;
+          if (pendingRoomRef.current) {
+            setDisplayedRoom(pendingRoomRef.current);
+          }
+        }
+      }, 2000);
+
+      return () => clearTimeout(safetyTimer);
     } else if (!isRollingLocallyRef.current) {
-      // If we are not actively animating a roll, sync state instantly
+      // For non-roll actions (buying property, ending turn, etc.), update instantly
       setDisplayedRoom(room);
     }
   }, [room]);
 
-  // Called strictly after Dice.tsx finishes its 500ms animation
   const handleRollComplete = () => {
     isRollingLocallyRef.current = false;
     if (pendingRoomRef.current) {
-      setDisplayedRoom(pendingRoomRef.current); // Now tokens, logs, and money update!
+      setDisplayedRoom(pendingRoomRef.current);
     }
   };
 
@@ -359,7 +375,7 @@ function CenterEventLog({ log }: { log: Room["log"] }) {
 
   return (
     <div className="w-full p-2.5 h-58 shrink-0 relative overflow-hidden">
-      <div 
+      <div
         className="h-full overflow-y-auto text-center flex flex-col gap-1.5 scrollbar-none [&::-webkit-scrollbar]:hidden mask-[linear-gradient(to_bottom,black_60%,transparent_100%)]"
       >
         {reversedLog.map((entry) => (
@@ -401,8 +417,8 @@ function PlayerMoneyDisplay({ money }: { money: number }) {
     flash === "gain"
       ? "text-teal font-bold scale-105"
       : flash === "loss"
-      ? "text-signal font-bold scale-105"
-      : "text-parchment/90 font-medium";
+        ? "text-signal font-bold scale-105"
+        : "text-parchment/90 font-medium";
 
   return (
     <span className="relative inline-block">
@@ -413,9 +429,8 @@ function PlayerMoneyDisplay({ money }: { money: number }) {
       {delta && (
         <span
           key={delta.id}
-          className={`absolute left-0 pointer-events-none font-mono font-bold text-xs whitespace-nowrap ${
-            delta.type === "gain" ? "text-teal" : "text-signal"
-          }`}
+          className={`absolute left-0 pointer-events-none font-mono font-bold text-xs whitespace-nowrap ${delta.type === "gain" ? "text-teal" : "text-signal"
+            }`}
           style={{
             top: "-0.25rem",
             animation: "floatAndFade 1500ms cubic-bezier(0, 0, 0.2, 1) forwards",
@@ -451,9 +466,8 @@ function PlayerHud({ room, playerId, currentTurnId }: { room: Room; playerId: st
         {room.players.map((p) => (
           <div
             key={p.id}
-            className={`notch-sm flex items-center gap-2.5 px-2.5 py-1.5 border transition-colors ${
-              p.id === currentTurnId ? "border-amber bg-ink-raised-2" : "border-ink-border/50 bg-ink/40"
-            } ${p.bankrupt ? "opacity-40" : ""}`}
+            className={`notch-sm flex items-center gap-2.5 px-2.5 py-1.5 border transition-colors ${p.id === currentTurnId ? "border-amber bg-ink-raised-2" : "border-ink-border/50 bg-ink/40"
+              } ${p.bankrupt ? "opacity-40" : ""}`}
           >
             <AvatarBadge id={p.avatar} size={30} />
             <div className="min-w-0 flex-1">
