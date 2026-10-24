@@ -32,50 +32,90 @@ export default function Game() {
   const [rollKey, setRollKey] = useState(0);
 
   const prevRollSignatureRef = useRef<string | null>(null);
-  const isRollingLocallyRef = useRef(false);
   const pendingRoomRef = useRef<Room | null>(room);
+  const animationStateRef = useRef<"idle" | "rolling" | "walking">("idle");
 
   useEffect(() => {
     if (!room) return;
     pendingRoomRef.current = room;
 
-    // Create a unique primitive signature for the current roll (dice + turn index)
     const currentRollSignature = room.lastRoll
       ? `${room.lastRoll.die1}-${room.lastRoll.die2}-${room.currentTurnIndex}`
       : null;
 
-    // Detect if this is a truly new roll by comparing primitive strings
     const isNewRoll =
       Boolean(room.lastRoll) &&
       currentRollSignature !== prevRollSignatureRef.current;
 
     if (isNewRoll) {
       prevRollSignatureRef.current = currentRollSignature;
-      isRollingLocallyRef.current = true;
+      animationStateRef.current = "rolling";
       setRollKey((k) => k + 1);
 
-      // Safety fallback timer: auto-unlocks after 2s if animation callback fails
+      // Ultimate safety fallback: force full sync after 4 seconds if anything hangs
       const safetyTimer = setTimeout(() => {
-        if (isRollingLocallyRef.current) {
-          isRollingLocallyRef.current = false;
+        if (animationStateRef.current !== "idle") {
+          animationStateRef.current = "idle";
           if (pendingRoomRef.current) {
             setDisplayedRoom(pendingRoomRef.current);
           }
         }
-      }, 2000);
+      }, 4000);
 
       return () => clearTimeout(safetyTimer);
-    } else if (!isRollingLocallyRef.current) {
-      // For non-roll actions (buying property, ending turn, etc.), update instantly
+    } else if (animationStateRef.current === "idle") {
       setDisplayedRoom(room);
     }
   }, [room]);
 
+  // Phase 1 finished: Dice finished shaking, start token walking step-by-step
   const handleRollComplete = () => {
-    isRollingLocallyRef.current = false;
-    if (pendingRoomRef.current) {
-      setDisplayedRoom(pendingRoomRef.current);
+    if (!pendingRoomRef.current) return;
+    const targetRoom = pendingRoomRef.current;
+    const turnPlayerId = targetRoom.turnOrder[targetRoom.currentTurnIndex];
+
+    const oldPlayer = displayedRoom?.players.find((p) => p.id === turnPlayerId);
+    const newPlayer = targetRoom.players.find((p) => p.id === turnPlayerId);
+
+    if (!oldPlayer || !newPlayer || oldPlayer.position === newPlayer.position) {
+      animationStateRef.current = "idle";
+      setDisplayedRoom(targetRoom);
+      return;
     }
+
+    animationStateRef.current = "walking";
+    let currentPos = oldPlayer.position;
+    const targetPos = newPlayer.position;
+    const totalTiles = BOARD.length;
+
+    const stepsToTake = (targetPos - currentPos + totalTiles) % totalTiles;
+    const totalWalkTimeMs = 500;
+    const stepIntervalMs = Math.max(20, Math.floor(totalWalkTimeMs / (stepsToTake || 1)));
+
+    const stepInterval = setInterval(() => {
+      // Check if walk is finished or if safety fallback cleared the animation state
+      if (currentPos === targetPos || animationStateRef.current !== "walking") {
+        clearInterval(stepInterval);
+        animationStateRef.current = "idle";
+        if (pendingRoomRef.current) {
+          setDisplayedRoom(pendingRoomRef.current); // Atomic final state sync
+        }
+        return;
+      }
+
+      currentPos = (currentPos + 1) % totalTiles;
+
+      // Direct, light position update for the active player only
+      setDisplayedRoom((prev) => {
+        if (!prev) return prev;
+        return {
+          ...prev,
+          players: prev.players.map((p) =>
+            p.id === turnPlayerId ? { ...p, position: currentPos } : p
+          ),
+        };
+      });
+    }, stepIntervalMs);
   };
 
   if (!room || !me || !playerId) return null;
@@ -128,7 +168,6 @@ export default function Game() {
 
         {/* COLUMN 3 (RIGHT): Room info, Players, Trades, Properties */}
         <aside className="h-full min-h-0 flex flex-col gap-3 pr-1 overflow-hidden">
-          {/* Room Code & Forfeit Card */}
           <div className="border border-ink-border bg-ink-raised p-3 shrink-0 flex items-center justify-between">
             <span className="text-xs font-mono text-slate bg-ink/60 px-2 py-1 rounded border border-ink-border">
               Room {currentDisplayedRoom.code}
@@ -285,7 +324,7 @@ function CenterPanel({
         {room.settings.turnTimerEnabled && room.turnDeadline && <TurnCountdown deadline={room.turnDeadline} />}
       </div>
 
-      {/* 2. Dice - Passes live latestLastRoll so it animates to the right values, triggers onRollComplete */}
+      {/* 2. Dice */}
       <div className="shrink-0">
         <Dice
           die1={latestLastRoll?.die1 ?? null}
