@@ -22,25 +22,20 @@ export interface BoardTile {
 
 export interface GroupInfo {
   id: string;
-  color: string;
   label: string;
   houseCost: number;
 }
 
 export const GROUPS: GroupInfo[] = [
-  { id: "ash", color: "#808080", label: "Ash", houseCost: 50 },
-  { id: "cove", color: "#5AA9D6", label: "Cove", houseCost: 50 },
-  { id: "orchid", color: "#C9599C", label: "Orchid", houseCost: 100 },
-  { id: "marigold", color: "#E8963D", label: "Marigold", houseCost: 100 },
-  { id: "garnet", color: "#D64545", label: "Garnet", houseCost: 150 },
-  { id: "gold", color: "#E8C93D", label: "Gold", houseCost: 150 },
-  { id: "emerald", color: "#3FA66B", label: "Emerald", houseCost: 200 },
-  { id: "sapphire", color: "#4A5FC1", label: "Sapphire", houseCost: 200 },
+  { id: "ash", label: "Ash", houseCost: 50 },
+  { id: "cove", label: "Cove", houseCost: 50 },
+  { id: "orchid", label: "Orchid", houseCost: 100 },
+  { id: "marigold", label: "Marigold", houseCost: 100 },
+  { id: "garnet", label: "Garnet", houseCost: 150 },
+  { id: "gold", label: "Gold", houseCost: 150 },
+  { id: "emerald", label: "Emerald", houseCost: 200 },
+  { id: "sapphire", label: "Sapphire", houseCost: 200 },
 ];
-
-export function groupColor(id: string | undefined): string {
-  return GROUPS.find((g) => g.id === id)?.color ?? "#8B90A6";
-}
 
 export function groupHouseCost(id: string | undefined): number {
   return GROUPS.find((g) => g.id === id)?.houseCost ?? 50;

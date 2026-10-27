@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { AvatarBadge } from "./avatars";
-import { BOARD, groupColor } from "./board/data";
+import { BOARD } from "./board/data";
 import { useRoom } from "./RoomContext";
 import type { Player, Room, TradeOffer } from "../types";
 
@@ -144,7 +144,6 @@ function TradeComposer({ room, me, players, onClose }: { room: Room; me: Player;
               {myTiles.map((t) => (
                 <label key={t.index} className="flex items-center gap-1.5 text-xs text-parchment/90">
                   <input type="checkbox" checked={offerTiles.includes(t.index)} onChange={() => toggle(offerTiles, setOfferTiles, t.index)} />
-                  {t.group && <span className="w-1.5 h-1.5 rounded-full shrink-0" style={{ backgroundColor: groupColor(t.group) }} />}
                   <span className="truncate">{t.name}</span>
                 </label>
               ))}
@@ -171,7 +170,6 @@ function TradeComposer({ room, me, players, onClose }: { room: Room; me: Player;
                     checked={requestTiles.includes(t.index)}
                     onChange={() => toggle(requestTiles, setRequestTiles, t.index)}
                   />
-                  {t.group && <span className="w-1.5 h-1.5 rounded-full shrink-0" style={{ backgroundColor: groupColor(t.group) }} />}
                   <span className="truncate">{t.name}</span>
                 </label>
               ))}

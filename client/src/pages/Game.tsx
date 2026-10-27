@@ -3,7 +3,7 @@ import Wordmark from "../components/Wordmark";
 import Dice from "../components/Dice";
 import Board from "../game/board/Board";
 import { AvatarBadge } from "../game/avatars";
-import { BOARD, groupColor, groupHouseCost, tileAt, type BoardTile } from "../game/board/data";
+import { BOARD, groupHouseCost, tileAt, type BoardTile } from "../game/board/data";
 import { checkCanBuildHouse, checkCanMortgage, checkCanSellHouse, checkCanUnmortgage, ownsWholeGroup } from "../game/board/economy";
 import TradePanel from "../game/TradePanel";
 import Chat from "../game/Chat";
@@ -571,9 +571,6 @@ function PropertiesPanel({
             <div key={tile.index} className={`notch-sm border px-2.5 py-1.5 bg-ink/30 ${mortgaged ? "border-signal/50" : "border-ink-border"}`}>
               <div className="flex items-center justify-between gap-2">
                 <div className="flex items-center gap-1.5 min-w-0">
-                  {tile.group && (
-                    <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: groupColor(tile.group) }} />
-                  )}
                   <span className="text-xs text-parchment font-medium truncate">{tile.name}</span>
                 </div>
                 {mortgaged ? (
