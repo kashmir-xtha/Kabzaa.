@@ -155,16 +155,21 @@ export default function Tile({
     );
   }
 
-  if (tile.kind === "property") {
-    // Uses default #808080 dash when unowned, and switches to ownerColor when purchased
+  // Handle Property, Transit, and Utility tiles uniformly for ownership and price tags
+  const isPurchasable = tile.kind === "property" || tile.kind === "transit" || tile.kind === "utility";
+
+  if (isPurchasable) {
     const dashColor = ownerColor || "#808080";
     const barStyle = { [BAR_COLOR_PROP[edge]]: dashColor } as React.CSSProperties;
+    
+    // Shows current rent if owned, or base purchase price if unowned
     const displayValue = ownerColor && rent !== undefined ? `$${rent}` : `$${tile.price}`;
-    const flagSrc = getTileFlag(tile.name);
+    const flagSrc = tile.kind === "property" ? getTileFlag(tile.name) : undefined;
+    const tint = tile.kind === "transit" ? "text-amber" : tile.kind === "utility" ? "text-teal" : "";
 
     return (
       <div className={`${base} flex-col justify-between ${BAR_SIDE[edge]}`} style={barStyle}>
-        {/* Background flag layer */}
+        {/* Background flag layer for properties */}
         {flagSrc && (
           <div className="absolute inset-0 opacity-30 pointer-events-none flex items-center justify-center z-0">
             <img src={flagSrc} alt="" className="w-full h-full object-cover" />
@@ -172,10 +177,19 @@ export default function Tile({
         )}
 
         <div className="p-0.5 flex flex-col justify-between h-full w-full relative z-10" title={ownerName ? `${tile.name} (Owned by ${ownerName})` : tile.name}>
-          <span className="text-[7.5px] sm:text-[8.5px] leading-tight font-medium text-parchment/90 line-clamp-2 drop-shadow-xs">
-            {tile.name}
-          </span>
-          <HousesIndicator houses={houses} />
+          <div className="flex items-center justify-between">
+            <span className="text-[7.5px] sm:text-[8.5px] leading-tight font-medium text-parchment/90 line-clamp-2 drop-shadow-xs">
+              {tile.name}
+            </span>
+            {tile.kind !== "property" && (
+              <div className={`${tint} scale-75 shrink-0`}>
+                <TileIcon kind={tile.kind} />
+              </div>
+            )}
+          </div>
+
+          {tile.kind === "property" ? <HousesIndicator houses={houses} /> : <div />}
+
           <span 
             className={`text-[9px] font-mono ${ownerColor ? "font-semibold" : "text-parchment/90 font-medium drop-shadow-xs"}`}
             style={ownerColor ? { color: ownerColor } : undefined}
@@ -197,7 +211,7 @@ export default function Tile({
         <TileIcon kind={tile.kind} />
       </div>
       <span className="text-[7.5px] sm:text-[8.5px] leading-tight text-parchment/80 line-clamp-2">{tile.name}</span>
-      {tile.kind === "tax" && <span className="text-[7px] font-mono text-slate">\${tile.taxAmount}</span>}
+      {tile.kind === "tax" && <span className="text-[7px] font-mono text-slate">${tile.taxAmount}</span>}
       <Occupants occupants={occupants} />
     </div>
   );
