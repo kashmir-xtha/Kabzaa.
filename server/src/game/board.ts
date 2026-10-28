@@ -2,7 +2,7 @@ export type TileKind =
   | "start"
   | "jail"
   | "rest"
-  | "goToJail"
+  | "autoRoll"
   | "property"
   | "transit"
   | "utility"
@@ -45,8 +45,7 @@ export const HOUSE_RENT_MULTIPLIERS = [5, 15, 45, 80, 125];
 export const MAX_HOUSES = 4;
 export const HOTEL_LEVEL = 5;
 
-export const JAIL_POSITION = 10;
-export const GO_TO_JAIL_POSITION = 30;
+export const JAIL_POSITION = 30;
 export const PASS_GO_AMOUNT = 300;      // Awarded when passing through Start
 export const LAND_START_AMOUNT = 500;      // Awarded when landing directly on Start
 export const JAIL_BAIL = 50;
@@ -62,7 +61,7 @@ export const BOARD: BoardTile[] = [
   { index: 7, kind: "twist", name: "Twist" },
   { index: 8, kind: "property", name: "St. Petersburg", group: "cove", price: 100, rent: 6 },
   { index: 9, kind: "property", name: "Moscow", group: "cove", price: 120, rent: 8 },
-  { index: 10, kind: "jail", name: "Holding" },
+  { index: 10, kind: "autoRoll", name: "Roll again" },
   { index: 11, kind: "property", name: "Valencia", group: "orchid", price: 140, rent: 10 },
   { index: 12, kind: "utility", name: "Hydro Works", price: 150 },
   { index: 13, kind: "property", name: "Barcelona", group: "orchid", price: 140, rent: 10 },
@@ -82,7 +81,7 @@ export const BOARD: BoardTile[] = [
   { index: 27, kind: "property", name: "Manchester", group: "gold", price: 260, rent: 22 },
   { index: 28, kind: "utility", name: "Power Co.", price: 150 },
   { index: 29, kind: "property", name: "London", group: "gold", price: 280, rent: 24 },
-  { index: 30, kind: "goToJail", name: "Send-off" },
+  { index: 30, kind: "jail", name: "Prison" },
   { index: 31, kind: "property", name: "Sharjah", group: "emerald", price: 300, rent: 26 },
   { index: 32, kind: "property", name: "Abu Dhabi", group: "emerald", price: 300, rent: 26 },
   { index: 33, kind: "windfall", name: "Windfall" },

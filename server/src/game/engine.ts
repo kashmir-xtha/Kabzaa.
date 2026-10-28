@@ -27,9 +27,8 @@ export function addLog(room: Room, message: string) {
 
 interface MoveResult {
   goToJail: boolean;
+  autoRoll: boolean; // Added flag for Tile 10 re-roll
   purchasable: boolean;
-  /** Player who rent was paid to, if any — used to hand assets to the right
-   * creditor if this move ends up bankrupting the mover. */
   creditorId?: string;
 }
 
@@ -43,10 +42,8 @@ function movePlayer(room: Room, player: Player, steps: number): MoveResult {
     if (next === 0) {
       player.money += LAND_START_AMOUNT;
       addLog(room, `${player.nickname} landed on Start and collected $${LAND_START_AMOUNT}.`);
-    }
-    else {
+    } else {
       player.money += PASS_GO_AMOUNT;
-      console.log(prev, next)
       addLog(room, `${player.nickname} passed Start and collected $${PASS_GO_AMOUNT}.`);
     }
   }
@@ -82,7 +79,10 @@ function movePlayer(room: Room, player: Player, steps: number): MoveResult {
     }
   }
 
-  return { goToJail: tile.kind === "goToJail", purchasable, creditorId };
+  const goToJail = tile.kind === "jail" || player.position === JAIL_POSITION;
+  const autoRoll = tile.kind === "autoRoll";
+
+  return { goToJail, autoRoll, purchasable, creditorId };
 }
 
 function sendToJail(room: Room, player: Player) {
@@ -90,7 +90,7 @@ function sendToJail(room: Room, player: Player) {
   player.inJail = true;
   player.jailTurns = 0;
   player.doublesCount = 0;
-  addLog(room, `${player.nickname} was sent to Holding.`);
+  addLog(room, `${player.nickname} was sent to Prison.`);
 }
 
 function currentPlayer(room: Room): Player {
@@ -124,7 +124,10 @@ function handlePostMove(room: Room, player: Player, result: MoveResult, phaseIfN
     return;
   }
 
-  resolvePhaseAfterMove(room, result, phaseIfNoDecision);
+  // If they landed on Tile 10 (autoRoll), force phaseIfNoDecision to remain "rolling"
+  const finalPhase = result.autoRoll ? "rolling" : phaseIfNoDecision;
+
+  resolvePhaseAfterMove(room, result, finalPhase);
 }
 
 /** Applies a move's purchase outcome to room.turnPhase, stashing the phase

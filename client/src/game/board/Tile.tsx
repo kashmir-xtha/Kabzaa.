@@ -51,31 +51,43 @@ function TileIcon({ kind }: { kind: BoardTile["kind"] }) {
   switch (kind) {
     case "start":
       return (
-        <svg viewBox="0 0 24 24" className="w-4 h-4 sm:w-5 sm:h-5">
-          <path d="M4 12h13" {...common} />
-          <path d="M12 5l7 7-7 7" {...common} />
+        <svg viewBox="0 0 24 24" className="w-6 h-6">
+          <g transform="rotate(180 12 12)">
+            <path d="M4 12h13" {...common} />
+            <path d="M12 5l7 7-7 7" {...common} />
+          </g>
         </svg>
       );
     case "jail":
       return (
-        <svg viewBox="0 0 24 24" className="w-4 h-4 sm:w-5 sm:h-5">
+        <svg viewBox="0 0 24 24" className="w-7 h-7">
           <rect x="5" y="4" width="14" height="16" rx="1" {...common} />
           <path d="M9 4v16 M14 4v16 M5 9h14 M5 15h14" {...common} />
         </svg>
       );
     case "rest":
       return (
-        <svg viewBox="0 0 24 24" className="w-4 h-4 sm:w-5 sm:h-5">
+        <svg viewBox="0 0 24 24" className="w-7 h-7">
           <circle cx="12" cy="12" r="7" {...common} />
           <path d="M12 8v4l3 2" {...common} />
         </svg>
       );
-    case "goToJail":
+    case "autoRoll":
       return (
-        <svg viewBox="0 0 24 24" className="w-4 h-4 sm:w-5 sm:h-5">
-          <path d="M12 3v10" {...common} />
-          <path d="M8 9l4 4 4-4" {...common} />
-          <path d="M5 19h14" {...common} />
+        <svg viewBox="0 0 24 24" className="w-7 h-7">
+          {/* Back/Left Die */}
+          <rect x="3" y="4" width="11" height="11" rx="2" className="fill-ink/40" stroke="currentColor" strokeWidth={1.5} />
+          <circle cx="6" cy="7" r="0.9" fill="currentColor" />
+          <circle cx="11" cy="12" r="0.9" fill="currentColor" />
+          <circle cx="8.5" cy="9.5" r="0.9" fill="currentColor" />
+
+          {/* Front/Right Die (Slightly Overlapping) */}
+          <rect x="9" y="9" width="12" height="12" rx="2" className="fill-ink-raised" stroke="currentColor" strokeWidth={1.6} />
+          <circle cx="12" cy="12" r="1" fill="currentColor" />
+          <circle cx="18" cy="12" r="1" fill="currentColor" />
+          <circle cx="12" cy="18" r="1" fill="currentColor" />
+          <circle cx="18" cy="18" r="1" fill="currentColor" />
+          <circle cx="15" cy="15" r="1" fill="currentColor" />
         </svg>
       );
     case "transit":
@@ -161,7 +173,7 @@ export default function Tile({
   if (isPurchasable) {
     const dashColor = ownerColor || "#808080";
     const barStyle = { [BAR_COLOR_PROP[edge]]: dashColor } as React.CSSProperties;
-    
+
     // Shows current rent if owned, or base purchase price if unowned
     const displayValue = ownerColor && rent !== undefined ? `$${rent}` : `$${tile.price}`;
     const flagSrc = tile.kind === "property" ? getTileFlag(tile.name) : undefined;
@@ -190,7 +202,7 @@ export default function Tile({
 
           {tile.kind === "property" ? <HousesIndicator houses={houses} /> : <div />}
 
-          <span 
+          <span
             className={`text-[9px] font-mono ${ownerColor ? "font-semibold" : "text-parchment/90 font-medium drop-shadow-xs"}`}
             style={ownerColor ? { color: ownerColor } : undefined}
           >
@@ -203,7 +215,13 @@ export default function Tile({
   }
 
   const tint =
-    tile.kind === "tax" ? "text-signal" : tile.kind === "twist" ? "text-amber" : tile.kind === "windfall" ? "text-teal" : "text-slate";
+    tile.kind === "tax"
+      ? "text-signal"
+      : tile.kind === "twist" || tile.kind === "autoRoll"
+        ? "text-amber"
+        : tile.kind === "windfall"
+          ? "text-teal"
+          : "text-slate";
 
   return (
     <div className={`${base} flex-col items-center justify-center gap-0.5 text-center p-0.5`} title={tile.name}>
