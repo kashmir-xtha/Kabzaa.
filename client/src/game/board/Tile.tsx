@@ -182,7 +182,7 @@ export default function Tile({
               {tile.name}
             </span>
             {tile.kind !== "property" && (
-              <div className={`${tint} scale-75 shrink-0`}>
+              <div className={`${tint} scale-100 shrink-0`}>
                 <TileIcon kind={tile.kind} />
               </div>
             )}

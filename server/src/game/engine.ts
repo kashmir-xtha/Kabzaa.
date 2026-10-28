@@ -1,7 +1,7 @@
 import { randomUUID } from "node:crypto";
 import type { ChatMessage, Player, Room, TeamId, TradeOffer, TradeSide, TurnPhase } from "../types/index.js";
 import { GameError } from "../utils/errors.js";
-import { BOARD, JAIL_BAIL, JAIL_POSITION, PASS_GO_AMOUNT, groupHouseCost, tileAt } from "./board.js";
+import { BOARD, JAIL_BAIL, JAIL_POSITION, PASS_GO_AMOUNT, LAND_START_AMOUNT, groupHouseCost, tileAt } from "./board.js";
 import {
   checkCanBuildHouse,
   checkCanMortgage,
@@ -40,8 +40,15 @@ function movePlayer(room: Room, player: Player, steps: number): MoveResult {
   const next = (prev + steps) % 40;
 
   if (next < prev) {
-    player.money += PASS_GO_AMOUNT;
-    addLog(room, `${player.nickname} passed Start and collected $${PASS_GO_AMOUNT}.`);
+    if (next === 0) {
+      player.money += LAND_START_AMOUNT;
+      addLog(room, `${player.nickname} landed on Start and collected $${LAND_START_AMOUNT}.`);
+    }
+    else {
+      player.money += PASS_GO_AMOUNT;
+      console.log(prev, next)
+      addLog(room, `${player.nickname} passed Start and collected $${PASS_GO_AMOUNT}.`);
+    }
   }
 
   player.position = next;

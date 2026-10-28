@@ -30,7 +30,7 @@ export default function Chat({ messages, myPlayerId }: { messages: ChatMessage[]
             <AvatarBadge id={m.avatar} size={24} />
             <div className="min-w-0">
               <p className="text-[10px] text-slate">{m.nickname}</p>
-              <p className="text-sm text-parchment/90 break-words">{m.text}</p>
+              <p className="text-sm text-parchment/90 wrap-break-word">{m.text}</p>
             </div>
           </div>
         ))}

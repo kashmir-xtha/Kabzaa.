@@ -47,7 +47,8 @@ export const HOTEL_LEVEL = 5;
 
 export const JAIL_POSITION = 10;
 export const GO_TO_JAIL_POSITION = 30;
-export const PASS_GO_AMOUNT = 200;
+export const PASS_GO_AMOUNT = 300;      // Awarded when passing through Start
+export const LAND_START_AMOUNT = 500;      // Awarded when landing directly on Start
 export const JAIL_BAIL = 50;
 
 export const BOARD: BoardTile[] = [
