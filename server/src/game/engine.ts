@@ -178,10 +178,11 @@ export function initializeGame(room: Room) {
   if (first) addLog(room, `${first.nickname} goes first.`);
 }
 
-export function performRoll(room: Room) {
+export function performRoll(room: Room, forcedDie1?: number, forcedDie2?: number) {
   const player = currentPlayer(room);
-  const die1 = randDie();
-  const die2 = randDie();
+  // Use forced values if provided (for testing), otherwise roll randomly
+  const die1 = forcedDie1 !== undefined ? forcedDie1 : randDie();
+  const die2 = forcedDie2 !== undefined ? forcedDie2 : randDie();
   const isDoubles = die1 === die2;
   room.lastRoll = { die1, die2, isDoubles };
   addLog(room, `${player.nickname} rolled ${die1} and ${die2}${isDoubles ? " — doubles!" : ""}.`);
@@ -449,6 +450,18 @@ export function withdrawTrade(room: Room, playerId: string, tradeId: string) {
 // --- Chat ----------------------------------------------------------------
 
 export function postChatMessage(room: Room, player: Player, text: string) {
+  // --- QUICK DEBUG COMMANDS FOR TESTING ---
+  if (text.startsWith("/roll ")) {
+    const parts = text.split(" ");
+    const d1 = parseInt(parts[1], 10);
+    const d2 = parseInt(parts[2], 10);
+    if (!isNaN(d1) && !isNaN(d2)) {
+      performRoll(room, d1, d2);
+      return;
+    }
+  }
+  // ----------------------------------------
+
   const trimmed = text.trim().slice(0, MAX_CHAT_LENGTH);
   if (!trimmed) throw new GameError("Message can't be empty.");
   const message: ChatMessage = {
