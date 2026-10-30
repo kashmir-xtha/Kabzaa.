@@ -37,6 +37,7 @@ export interface Player {
   jailTurns: number;
   doublesCount: number;
   bankrupt: boolean;
+  prisonCount?: number; // Added to track total prison visits
 }
 
 export interface DiceRoll {

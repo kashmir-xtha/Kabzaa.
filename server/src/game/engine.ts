@@ -90,6 +90,7 @@ function sendToJail(room: Room, player: Player) {
   player.inJail = true;
   player.jailTurns = 0;
   player.doublesCount = 0;
+  player.prisonCount = (player.prisonCount || 0) + 1; // Increment counter
   addLog(room, `${player.nickname} was sent to Prison.`);
 }
 
@@ -171,6 +172,7 @@ export function initializeGame(room: Room) {
     p.jailTurns = 0;
     p.doublesCount = 0;
     p.bankrupt = false;
+    p.prisonCount = 0;
   });
 
   const first = room.players.find((p) => p.id === order[0]);
@@ -189,6 +191,8 @@ export function performRoll(room: Room, forcedDie1?: number, forcedDie2?: number
 
   if (player.inJail) {
     player.jailTurns += 1;
+    const currentBail = (player.prisonCount || 1) * JAIL_BAIL; // Scaled bail: 50, 100, 150...
+
     if (isDoubles) {
       player.inJail = false;
       player.jailTurns = 0;
@@ -196,10 +200,10 @@ export function performRoll(room: Room, forcedDie1?: number, forcedDie2?: number
       const result = movePlayer(room, player, die1 + die2);
       handlePostMove(room, player, result, "rolled");
     } else if (player.jailTurns >= 3) {
-      player.money -= JAIL_BAIL;
+      player.money -= currentBail;
       player.inJail = false;
       player.jailTurns = 0;
-      addLog(room, `${player.nickname} paid $${JAIL_BAIL} bail after 3 tries and left Holding.`);
+      addLog(room, `${player.nickname} paid $${currentBail} bail after 3 tries and left Holding.`);
       const result = movePlayer(room, player, die1 + die2);
       handlePostMove(room, player, result, "rolled");
     } else {
@@ -229,10 +233,12 @@ export function performRoll(room: Room, forcedDie1?: number, forcedDie2?: number
 
 export function payBailAndRoll(room: Room) {
   const player = currentPlayer(room);
-  player.money -= JAIL_BAIL;
+  const currentBail = (player.prisonCount || 1) * JAIL_BAIL; // Scaled bail calculation
+
+  player.money -= currentBail;
   player.inJail = false;
   player.jailTurns = 0;
-  addLog(room, `${player.nickname} paid $${JAIL_BAIL} to leave Holding early.`);
+  addLog(room, `${player.nickname} paid $${currentBail} to leave Holding early.`);
 
   const die1 = randDie();
   const die2 = randDie();

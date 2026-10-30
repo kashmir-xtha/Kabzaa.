@@ -364,21 +364,30 @@ function CenterPanel({
               </div>
             )}
 
-            {me.inJail && room.turnPhase === "rolling" && (
-              <p className="text-[10px] text-slate leading-tight text-center mb-1">
-                In Holding ({me.jailTurns}/3). Roll doubles or pay $50.
-              </p>
-            )}
+            {/* Dynamic Jail Bail Cost Calculation */}
+            {(() => {
+              const bailCost = (me.prisonCount || 1) * 50;
 
-            {room.turnPhase === "rolling" && me.inJail && (
-              <button
-                onClick={onPayBail}
-                disabled={me.money < 50}
-                className="notch-sm border border-ink-border py-1 text-xs text-parchment hover:border-amber disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
-              >
-                Pay $50 &amp; roll
-              </button>
-            )}
+              return (
+                <>
+                  {me.inJail && room.turnPhase === "rolling" && (
+                    <p className="text-[10px] text-slate leading-tight text-center mb-1">
+                      In Holding ({me.jailTurns}/3). Roll doubles or pay ${bailCost}.
+                    </p>
+                  )}
+
+                  {room.turnPhase === "rolling" && me.inJail && (
+                    <button
+                      onClick={onPayBail}
+                      disabled={me.money < bailCost}
+                      className="notch-sm border border-ink-border py-1 text-xs text-parchment hover:border-amber disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                    >
+                      Pay ${bailCost} &amp; roll
+                    </button>
+                  )}
+                </>
+              );
+            })()}
 
             {room.turnPhase === "rolling" && (
               <button
@@ -502,33 +511,47 @@ function PlayerHud({ room, playerId, currentTurnId }: { room: Room; playerId: st
     <div className="notch border border-ink-border bg-ink-raised p-3 shrink-0">
       <p className="text-xs font-semibold text-slate uppercase tracking-wider mb-2">Players</p>
       <div className="flex flex-col gap-1.5">
-        {room.players.map((p) => (
-          <div
-            key={p.id}
-            className={`notch-sm flex items-center gap-2.5 px-2.5 py-1.5 border transition-colors ${p.id === currentTurnId ? "border-amber bg-ink-raised-2" : "border-ink-border/50 bg-ink/40"
-              } ${p.bankrupt ? "opacity-40" : ""}`}
-          >
-            <AvatarBadge id={p.avatar} size={30} />
-            <div className="min-w-0 flex-1">
-              <div className="flex items-center gap-1.5">
-                <p className="text-xs font-semibold text-parchment truncate">{p.nickname}</p>
-                {p.id === playerId && <span className="text-[10px] text-slate shrink-0">(you)</span>}
-                {p.id === currentTurnId && !p.bankrupt && <span className="text-[10px] text-amber shrink-0">●</span>}
-              </div>
-              <div className="flex items-center gap-2 text-[11px] text-slate font-mono">
-                {p.bankrupt ? (
-                  <span className="text-signal">Bankrupt</span>
-                ) : (
-                  <>
-                    <PlayerMoneyDisplay money={p.money} />
-                    {ownedCount(p.id) > 0 && <span>{ownedCount(p.id)} owned</span>}
-                    {p.inJail && <span className="text-signal font-sans">Holding</span>}
-                  </>
-                )}
+        {room.players.map((p) => {
+          const prisonVisits = p.prisonCount || 0;
+          return (
+            <div
+              key={p.id}
+              className={`notch-sm flex items-center gap-2.5 px-2.5 py-1.5 border transition-colors ${p.id === currentTurnId ? "border-amber bg-ink-raised-2" : "border-ink-border/50 bg-ink/40"
+                } ${p.bankrupt ? "opacity-40" : ""}`}
+            >
+              <AvatarBadge id={p.avatar} size={30} />
+              <div className="min-w-0 flex-1">
+                <div className="flex items-center gap-1.5">
+                  <p className="text-xs font-semibold text-parchment truncate">{p.nickname}</p>
+                  {p.id === playerId && <span className="text-[10px] text-slate shrink-0">(you)</span>}
+                  {p.id === currentTurnId && !p.bankrupt && <span className="text-[10px] text-amber shrink-0">●</span>}
+
+                  {/* Prison Icon & Counter Badge */}
+                  {prisonVisits > 0 && (
+                    <div className="flex gap-0.5 ml-auto text-signal bg-signal/10 border border-signal/30 pt-0.5 px-1 rounded text-[9px] font-mono" title={`Jailed ${prisonVisits} ${prisonVisits === 1 ? "time" : "times"} • Bail cost increases by $50 per sentence (Current: $${prisonVisits * 50})`}>
+                      <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" className="w-3 h-3">
+                        <circle cx="50" cy="38" r="18" fill="#e5484d" />
+                        <path d="M20,88 C20,68 32,60 50,60 C68,60 80,68 80,88 Z" fill="#e5484d" />
+                      </svg>
+                      <span>{prisonVisits}</span>
+                    </div>
+                  )}
+                </div>
+                <div className="flex items-center gap-2 text-[11px] text-slate font-mono">
+                  {p.bankrupt ? (
+                    <span className="text-signal">Bankrupt</span>
+                  ) : (
+                    <>
+                      <PlayerMoneyDisplay money={p.money} />
+                      {ownedCount(p.id) > 0 && <span>{ownedCount(p.id)} owned</span>}
+                      {p.inJail && <span className="text-signal font-sans">Holding</span>}
+                    </>
+                  )}
+                </div>
               </div>
             </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
     </div>
   );

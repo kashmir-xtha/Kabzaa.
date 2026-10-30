@@ -36,6 +36,7 @@ export interface Player {
   jailTurns: number;
   doublesCount: number;
   bankrupt: boolean;
+  prisonCount?: number;
 }
 
 export interface DiceRoll {
