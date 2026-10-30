@@ -25,7 +25,7 @@ function getTileFlag(tileName: string): string | undefined {
   if (tileName === "Kathmandu" || tileName === "Pokhara") {
     return "/flags/nepal.png";
   }
-  if (tileName === "Moscow" || tileName === "St. Petersburg" || tileName === "Kazan") {
+  if (tileName === "Moscow" || tileName === "Petersburg" || tileName === "Kazan") {
     return "/flags/russia.png";
   }
   if (tileName === "Madrid" || tileName === "Barcelona" || tileName === "Valencia") {
@@ -63,15 +63,15 @@ function TileIcon({ kind }: { kind: BoardTile["kind"] }) {
       );
     case "jail":
       return (
-        <img src={jail} height="28rem" width="28rem"/>
+        <img src={jail} height="28rem" width="28rem" />
       );
     case "rest":
       return (
-        <img src={vacation} height="28rem" width="28rem"/>
+        <img src={vacation} height="28rem" width="28rem" />
       );
     case "autoRoll":
       return (
-        <img src={dice} height="28rem" width="28rem"/>
+        <img src={dice} height="28rem" width="28rem" />
       );
     case "transit":
       return (
@@ -220,18 +220,53 @@ export default function Tile({
 
 function HousesIndicator({ houses }: { houses: number }) {
   if (houses <= 0) return null;
+
   if (houses >= 5) {
     return (
-      <div className="flex justify-center my-0.5">
-        <span className="w-2.5 h-1.5 rounded-[1px] bg-signal shadow-sm" title="Hotel" />
+      <div className="flex items-center justify-center my-0.5" title="Hotel (Level 5)">
+        <svg
+          viewBox="0 0 24 24"
+          className="w-6.5 h-6.5 fill-current drop-shadow-[0_0_4px_rgba(214,69,69,0.6)]"
+        >
+          <rect x="4.5" y="10" width="1" height="2.5" rx="0.5" fill="url(#windowGlow)" />
+          <rect x="4.5" y="14.5" width="1" height="2.5" rx="0.5" fill="url(#windowGlow)" />
+          <rect x="9" y="12" width="1.5" height="3" rx="0.5" fill="url(#windowGlow)" />
+          <rect x="13.5" y="12" width="1.5" height="3" rx="0.5" fill="url(#windowGlow)" />
+          <rect x="18.5" y="10" width="1" height="2.5" rx="0.5" fill="url(#windowGlow)" />
+          <rect x="18.5" y="14.5" width="1" height="2.5" rx="0.5" fill="url(#windowGlow)" />
+          <path d="M9 21v-4.5a3 3 0 0 1 6 0V21" fill="url(#windowGlow)" />
+          <path d="M3 8h4v13H3V8Z" fill="#3b82f6" stroke="#3b82f6" stroke-width="1.2" stroke-linejoin="round" />
+          <path d="M2 8h6V5H6v1H4V5H2v3Z" fill="#3b82f6" stroke="#3b82f6" stroke-width="1.2" stroke-linejoin="round" />
+          <path d="M17 8h4v13h-4V8Z" fill="#3b82f6" stroke="#3b82f6" stroke-width="1.2" stroke-linejoin="round" />
+          <path d="M16 8h6V5h-2v1h-2V5h-2v3Z" fill="#3b82f6" stroke="#3b82f6" stroke-width="1.2" stroke-linejoin="round" />
+          <path d="M7 10h10v11H7V10Z" fill="#3b82f6" stroke="#3b82f6" stroke-width="1.2" stroke-linejoin="round" />
+          <path d="M7 10h10V7h-2v1h-2V7h-2v1h-2V7H7v3Z" fill="#3b82f6" stroke="#3b82f6" stroke-width="1.2" stroke-linejoin="round" />
+          <line x1="12" y1="7" x2="12" y2="1" stroke="#3b82f6" stroke-width="1.2" stroke-linecap="round" />
+          <path d="M12 1l4 2.5L12 6V1z" fill="#3b82f6" stroke="#3b82f6" stroke-width="1" stroke-linejoin="round" />
+          <path d="M9 21v-4.5a3 3 0 0 1 6 0V21" stroke="#3b82f6" stroke-width="0.8" />
+          <line x1="2" y1="22" x2="22" y2="22" stroke="#3b82f6" stroke-width="1.8" stroke-linecap="round" />
+        </svg>
       </div>
     );
   }
+
   return (
-    <div className="flex gap-0.5 justify-center my-0.5">
-      {Array.from({ length: houses }).map((_, i) => (
-        <span key={i} className="w-1 h-1.5 rounded-[1px] bg-teal shadow-sm" />
-      ))}
+    <div
+      className="relative flex items-center justify-center my-0.5"
+      title={`${houses} House${houses > 1 ? "s" : ""}`}
+    >
+      <svg
+        viewBox="0 0 24 24"
+        className="w-6.5 h-6.5 fill-current drop-shadow-[0_0_3px_rgba(63,166,107,0.5)]"
+      >
+        <path d="M15.5 8V3.5h2V10l-2-2z" fill="#3b82f6" stroke="#3b82f6" stroke-width="1.2" stroke-linejoin="round" />
+        <path d="M5 10.5V20a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-9.5L12 4.5 5 10.5z" fill="#3b82f6" stroke="#3b82f6" stroke-width="1.2" stroke-linejoin="round" />
+        <path d="M2.5 10l9.5-8 9.5 8" stroke="#3b82f6" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" fill="none" />
+        <line x1="3" y1="22" x2="21" y2="22" stroke="#3b82f6" stroke-width="1.5" stroke-linecap="round" />
+      </svg>
+      <span className="absolute inset-0 pt-1 flex items-center justify-center text-[10px] font-extrabold font-mono select-none">
+        {houses}
+      </span>
     </div>
   );
 }

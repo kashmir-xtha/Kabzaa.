@@ -59,7 +59,7 @@ export const BOARD: BoardTile[] = [
   { index: 5, kind: "transit", name: "South Transit", price: 200 },
   { index: 6, kind: "property", name: "Kazan", group: "cove", price: 100, rent: 6 },
   { index: 7, kind: "twist", name: "Twist" },
-  { index: 8, kind: "property", name: "St. Petersburg", group: "cove", price: 100, rent: 6 },
+  { index: 8, kind: "property", name: "Petersburg", group: "cove", price: 100, rent: 6 },
   { index: 9, kind: "property", name: "Moscow", group: "cove", price: 120, rent: 8 },
   { index: 10, kind: "autoRoll", name: "Roll again" },
   { index: 11, kind: "property", name: "Valencia", group: "orchid", price: 140, rent: 10 },
