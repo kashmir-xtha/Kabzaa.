@@ -43,6 +43,8 @@ interface RoomContextValue {
   unmortgageProperty: (tileIndex: number) => void;
   forfeitGame: () => void;
   sendChatMessage: (text: string) => void;
+  playWager: (amount: number) => void;
+  skipWager: () => void;
 }
 
 const RoomContext = createContext<RoomContextValue | null>(null);
@@ -140,7 +142,7 @@ export function RoomProvider({ children }: { children: ReactNode }) {
   }, [push]);
 
   const leaveRoom = useCallback(() => {
-    socket.emit("room:leave", {}, () => {});
+    socket.emit("room:leave", {}, () => { });
     clearSession();
     setRoom(null);
     setPlayerId(null);
@@ -210,6 +212,11 @@ export function RoomProvider({ children }: { children: ReactNode }) {
   );
   const forfeitGame = useCallback(() => void fireAndReport("game:forfeit", {}), [fireAndReport]);
   const sendChatMessage = useCallback((text: string) => void fireAndReport("chat:send", { text }), [fireAndReport]);
+  const playWager = useCallback(
+    (amount: number) => void fireAndReport("game:wager", { amount }),
+    [fireAndReport]
+  );
+  const skipWager = useCallback(() => void fireAndReport("game:skipWager", {}), [fireAndReport]);
 
   const me = room && playerId ? room.players.find((p) => p.id === playerId) ?? null : null;
 
@@ -245,7 +252,9 @@ export function RoomProvider({ children }: { children: ReactNode }) {
         unmortgageProperty,
         forfeitGame,
         sendChatMessage,
-        kickPlayer
+        kickPlayer,
+        playWager,
+        skipWager
       }}
     >
       {children}

@@ -4,7 +4,6 @@ import { avatarColor } from "../avatars";
 import type { Player } from "../../types";
 import jail from "../../assets/jail.png";
 import vacation from "../../assets/vacation.png";
-import dice from "../../assets/dice.png";
 
 const BAR_SIDE: Record<Edge, string> = {
   bottom: "border-t-2 sm:border-t-4",
@@ -69,9 +68,13 @@ function TileIcon({ kind }: { kind: BoardTile["kind"] }) {
       return (
         <img src={vacation} height="28rem" width="28rem" />
       );
-    case "autoRoll":
+    case "wager":
       return (
-        <img src={dice} height="28rem" width="28rem" />
+        <svg viewBox="0 0 24 24" className="w-8 h-8 text-amber">
+          <circle cx="12" cy="12" r="9" className="fill-ink-raised" stroke="currentColor" strokeWidth={1.5} />
+          <circle cx="12" cy="12" r="7" stroke="currentColor" strokeWidth={1} strokeDasharray="2 2" />
+          <path d="M12 7v10M14.5 9h-4.5a1.5 1.5 0 0 0 0 3h4a1.5 1.5 0 0 1 0 3h-4.5" {...common} />
+        </svg>
       );
     case "transit":
       return (
@@ -200,7 +203,7 @@ export default function Tile({
   const tint =
     tile.kind === "tax"
       ? "text-signal"
-      : tile.kind === "twist" || tile.kind === "autoRoll"
+      : tile.kind === "twist" || tile.kind === "wager"
         ? "text-amber"
         : tile.kind === "windfall"
           ? "text-teal"

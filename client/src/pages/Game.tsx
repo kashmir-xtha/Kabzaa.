@@ -25,6 +25,8 @@ export default function Game() {
     mortgageProperty,
     unmortgageProperty,
     forfeitGame,
+    playWager,
+    skipWager,
   } = useRoom();
   const [confirmingForfeit, setConfirmingForfeit] = useState(false);
 
@@ -161,6 +163,8 @@ export default function Game() {
               onEndTurn={endTurn}
               onBuy={buyProperty}
               onPass={passPurchase}
+              onPlayWager={playWager}
+              onSkipWager={skipWager}
               onRollComplete={handleRollComplete}
             />
           </Board>
@@ -284,6 +288,8 @@ function CenterPanel({
   onEndTurn,
   onBuy,
   onPass,
+  onPlayWager,
+  onSkipWager,
   onRollComplete,
 }: {
   room: Room;
@@ -297,6 +303,8 @@ function CenterPanel({
   onEndTurn: () => void;
   onBuy: () => void;
   onPass: () => void;
+  onPlayWager: (amount: number) => void;
+  onSkipWager: () => void;
   onRollComplete: () => void;
 }) {
   const bonusRoll = room.turnPhase === "rolling" && room.lastRoll?.isDoubles;
@@ -396,6 +404,39 @@ function CenterPanel({
               >
                 {bonusRoll ? "Roll doubles!" : me.inJail ? "Try doubles" : "Roll dice"}
               </button>
+            )}
+
+            {room.turnPhase === "awaiting-wager" && (
+              <div className="border border-amber bg-ink-raised-2 p-2 flex flex-col gap-2 rounded notch-sm">
+                <div className="text-center">
+                  <p className="text-xs font-bold text-amber uppercase tracking-wider">High Stakes Wager</p>
+                  <p className="text-[11px] text-parchment leading-tight mt-0.5">
+                    Roll 2 dice: <span className="text-signal font-mono">1–6 Lose</span> | <span className="text-teal font-mono">7–12 Win Double</span>
+                  </p>
+                </div>
+                <div className="flex gap-1.5 justify-center">
+                  <button
+                    onClick={() => onSkipWager()}
+                    className="px-2 py-1 text-xs border border-ink-border text-slate hover:text-parchment transition-colors cursor-pointer"
+                  >
+                    Skip
+                  </button>
+                  <button
+                    onClick={() => onPlayWager(50)}
+                    disabled={me.money < 50}
+                    className="flex-1 bg-amber/20 border border-amber text-amber font-mono font-bold text-xs py-1 hover:bg-amber hover:text-ink transition-all disabled:opacity-30 cursor-pointer"
+                  >
+                    Bet $50
+                  </button>
+                  <button
+                    onClick={() => onPlayWager(100)}
+                    disabled={me.money < 100}
+                    className="flex-1 bg-amber text-ink font-mono font-bold text-xs py-1 hover:opacity-90 transition-opacity disabled:opacity-30 cursor-pointer"
+                  >
+                    Bet $100
+                  </button>
+                </div>
+              </div>
             )}
 
             {room.turnPhase === "rolled" && (
