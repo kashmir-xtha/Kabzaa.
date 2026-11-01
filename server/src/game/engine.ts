@@ -27,7 +27,7 @@ export function addLog(room: Room, message: string) {
 
 interface MoveResult {
   goToJail: boolean;
-  autoRoll: boolean; // Added flag for Tile 10 re-roll
+  isWagerTile: boolean; // Added flag for Tile 10 wager
   purchasable: boolean;
   creditorId?: string;
 }
@@ -80,9 +80,9 @@ function movePlayer(room: Room, player: Player, steps: number): MoveResult {
   }
 
   const goToJail = tile.kind === "jail" || player.position === JAIL_POSITION;
-  const autoRoll = tile.kind === "autoRoll";
+  const isWagerTile = tile.kind === "wager";
 
-  return { goToJail, autoRoll, purchasable, creditorId };
+  return { goToJail, isWagerTile, purchasable, creditorId };
 }
 
 function sendToJail(room: Room, player: Player) {
@@ -125,10 +125,13 @@ function handlePostMove(room: Room, player: Player, result: MoveResult, phaseIfN
     return;
   }
 
-  // If they landed on Tile 10 (autoRoll), force phaseIfNoDecision to remain "rolling"
-  const finalPhase = result.autoRoll ? "rolling" : phaseIfNoDecision;
+  if (result.isWagerTile) {
+    room.turnPhase = "awaiting-wager" as TurnPhase; // Pause turn to prompt player to bet
+    room.pendingPostPurchasePhase = phaseIfNoDecision;
+    return;
+  }
 
-  resolvePhaseAfterMove(room, result, finalPhase);
+  resolvePhaseAfterMove(room, result, phaseIfNoDecision);
 }
 
 /** Applies a move's purchase outcome to room.turnPhase, stashing the phase
@@ -229,6 +232,38 @@ export function performRoll(room: Room, forcedDie1?: number, forcedDie2?: number
 
   const result = movePlayer(room, player, die1 + die2);
   handlePostMove(room, player, result, isDoubles ? "rolling" : "rolled");
+}
+
+export function playWager(room: Room, playerId: string, betAmount: number) {
+  const player = currentPlayer(room);
+  if (player.id !== playerId) throw new GameError("Not your turn.");
+  if (player.money < betAmount) throw new GameError("Insufficient funds for this bet.");
+
+  // Roll 2 dice for the wager
+  const d1 = randDie();
+  const d2 = randDie();
+  const sum = d1 + d2;
+
+  if (sum >= 7) {
+    // Win: Double wager back (profit = betAmount)
+    player.money += betAmount;
+    addLog(room, `[WAGER WIN] ${player.nickname} rolled ${d1}+${d2}=${sum} (7-12) and won $${betAmount * 2}!`);
+  } else {
+    // Lose: Deduct bet
+    player.money -= betAmount;
+    addLog(room, `[WAGER LOSS] ${player.nickname} rolled ${d1}+${d2}=${sum} (1-6) and lost $${betAmount}.`);
+  }
+
+  // Resume normal post-landing flow
+  room.turnPhase = room.pendingPostPurchasePhase ?? "rolled";
+  room.pendingPostPurchasePhase = null;
+}
+
+export function skipWager(room: Room, playerId: string) {
+  const player = currentPlayer(room);
+  addLog(room, `${player.nickname} chose not to wager.`);
+  room.turnPhase = room.pendingPostPurchasePhase ?? "rolled";
+  room.pendingPostPurchasePhase = null;
 }
 
 export function payBailAndRoll(room: Room) {

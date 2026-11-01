@@ -43,7 +43,7 @@ export function registerSocketHandlers(io: Server, roomManager: RoomManager) {
     };
 
     const handle = <T>(fn: () => Room, ack: Ack<Room>) => {
-      const safeAck: Ack<Room> = typeof ack === "function" ? ack : () => {};
+      const safeAck: Ack<Room> = typeof ack === "function" ? ack : () => { };
       try {
         const room = fn();
         safeAck({ ok: true, data: room });
@@ -54,7 +54,7 @@ export function registerSocketHandlers(io: Server, roomManager: RoomManager) {
     };
 
     socket.on("room:create", (payload: { nickname: unknown }, rawAck: Ack<{ room: Room; playerId: string }>) => {
-      const ack: Ack<{ room: Room; playerId: string }> = typeof rawAck === "function" ? rawAck : () => {};
+      const ack: Ack<{ room: Room; playerId: string }> = typeof rawAck === "function" ? rawAck : () => { };
       try {
         const nickname = sanitizeNickname(payload?.nickname);
         const { room, player } = roomManager.createRoom(nickname, socket.id);
@@ -68,7 +68,7 @@ export function registerSocketHandlers(io: Server, roomManager: RoomManager) {
     socket.on(
       "room:join",
       (payload: { code: unknown; nickname: unknown }, rawAck: Ack<{ room: Room; playerId: string }>) => {
-        const ack: Ack<{ room: Room; playerId: string }> = typeof rawAck === "function" ? rawAck : () => {};
+        const ack: Ack<{ room: Room; playerId: string }> = typeof rawAck === "function" ? rawAck : () => { };
         try {
           const code = sanitizeRoomCode(payload?.code);
           const nickname = sanitizeNickname(payload?.nickname);
@@ -83,7 +83,7 @@ export function registerSocketHandlers(io: Server, roomManager: RoomManager) {
     );
 
     socket.on("room:rejoin", (payload: { code: unknown; playerId: unknown }, rawAck: Ack<{ room: Room; playerId: string }>) => {
-      const ack: Ack<{ room: Room; playerId: string }> = typeof rawAck === "function" ? rawAck : () => {};
+      const ack: Ack<{ room: Room; playerId: string }> = typeof rawAck === "function" ? rawAck : () => { };
       try {
         const code = sanitizeRoomCode(payload?.code);
         if (typeof payload?.playerId !== "string") throw new GameError("Missing player id.");
@@ -97,13 +97,13 @@ export function registerSocketHandlers(io: Server, roomManager: RoomManager) {
     });
 
     socket.on("room:leave", (_payload: unknown, rawAck: Ack<null>) => {
-      const ack: Ack<null> = typeof rawAck === "function" ? rawAck : () => {};
+      const ack: Ack<null> = typeof rawAck === "function" ? rawAck : () => { };
       const { room, code } = roomManager.leaveRoom(socket.id);
       if (code) socket.leave(code);
       ack({ ok: true, data: null });
       if (room) broadcastRoom(room);
     });
-    
+
     socket.on("room:kick", (payload: { targetId: unknown }, rawAck: Ack<Room>) => {
       const ack: Ack<Room> = typeof rawAck === "function" ? rawAck : () => { };
       try {
@@ -159,6 +159,14 @@ export function registerSocketHandlers(io: Server, roomManager: RoomManager) {
       handle(() => roomManager.rollDice(socket.id), ack);
     });
 
+    socket.on("game:wager", (payload: { amount: number }, ack: Ack<Room>) => {
+      handle(() => roomManager.playWager(socket.id, payload.amount), ack);
+    });
+
+    socket.on("game:skipWager", (_payload: unknown, ack: Ack<Room>) => {
+      handle(() => roomManager.skipWager(socket.id), ack);
+    });
+    
     socket.on("game:payBail", (_payload: unknown, ack: Ack<Room>) => {
       handle(() => roomManager.payBail(socket.id), ack);
     });

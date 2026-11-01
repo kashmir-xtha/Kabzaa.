@@ -45,7 +45,7 @@ export interface DiceRoll {
   isDoubles: boolean;
 }
 
-export type TurnPhase = "rolling" | "awaiting-purchase" | "rolled";
+export type TurnPhase = "rolling" | "awaiting-purchase" | "awaiting-wager" | "rolled";
 
 export interface LogEntry {
   id: string;

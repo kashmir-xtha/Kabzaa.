@@ -2,7 +2,7 @@ export type TileKind =
   | "start"
   | "jail"
   | "rest"
-  | "autoRoll"
+  | "wager"
   | "property"
   | "transit"
   | "utility"
@@ -61,7 +61,7 @@ export const BOARD: BoardTile[] = [
   { index: 7, kind: "twist", name: "Twist" },
   { index: 8, kind: "property", name: "Petersburg", group: "cove", price: 100, rent: 6 },
   { index: 9, kind: "property", name: "Moscow", group: "cove", price: 120, rent: 8 },
-  { index: 10, kind: "autoRoll", name: "Roll again" },
+  { index: 10, kind: "wager", name: "High Stakes" },
   { index: 11, kind: "property", name: "Valencia", group: "orchid", price: 140, rent: 10 },
   { index: 12, kind: "utility", name: "Hydro Works", price: 150 },
   { index: 13, kind: "property", name: "Barcelona", group: "orchid", price: 140, rent: 10 },

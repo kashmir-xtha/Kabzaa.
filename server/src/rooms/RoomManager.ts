@@ -11,7 +11,7 @@ import {
   type TradeSide,
 } from "../types/index.js";
 import { generateRoomCode } from "../utils/roomCode.js";
-import { endTurn, initializeGame, payBailAndRoll, performRoll, buyCurrentTile, passCurrentPurchase, buildHouse, sellHouse, createTrade, resolveTrade, withdrawTrade, mortgageTile, unmortgageTile, declareBankruptcy, postChatMessage, forceCompleteTurn } from "../game/engine.js";
+import { endTurn, initializeGame, payBailAndRoll, performRoll, buyCurrentTile, passCurrentPurchase, buildHouse, sellHouse, createTrade, resolveTrade, withdrawTrade, mortgageTile, unmortgageTile, declareBankruptcy, postChatMessage, forceCompleteTurn, playWager, skipWager } from "../game/engine.js";
 import { JAIL_BAIL } from "../game/board.js";
 import { GameError } from "../utils/errors.js";
 import { isValidAvatar, pickUnusedAvatar } from "../utils/avatars.js";
@@ -323,6 +323,34 @@ export class RoomManager {
     if (!player.inJail) throw new GameError("You're not in Holding.");
     if (player.money < JAIL_BAIL) throw new GameError("You can't afford the bail.");
     payBailAndRoll(room);
+    this.scheduleTurnTimer(room);
+    return room;
+  }
+
+  playWager(socketId: string, amount: number): Room {
+    const { room, player } = this.requirePlayer(socketId);
+    if (player.id !== room.turnOrder[room.currentTurnIndex]) {
+      throw new GameError("It is not your turn.");
+    }
+    if (room.turnPhase !== "awaiting-wager") {
+      throw new GameError("Not currently awaiting a wager.");
+    }
+
+    playWager(room, player.id, amount);
+    this.scheduleTurnTimer(room);
+    return room;
+  }
+
+  skipWager(socketId: string): Room {
+    const { room, player } = this.requirePlayer(socketId);
+    if (player.id !== room.turnOrder[room.currentTurnIndex]) {
+      throw new GameError("It is not your turn.");
+    }
+    if (room.turnPhase !== "awaiting-wager") {
+      throw new GameError("Not currently awaiting a wager.");
+    }
+
+    skipWager(room, player.id);
     this.scheduleTurnTimer(room);
     return room;
   }
