@@ -55,7 +55,7 @@ export const BOARD: BoardTile[] = [
   { index: 1, kind: "property", name: "Kathmandu", group: "ash", price: 60, rent: 2 },
   { index: 2, kind: "windfall", name: "Windfall" },
   { index: 3, kind: "property", name: "Pokhara", group: "ash", price: 60, rent: 4 },
-  { index: 4, kind: "tax", name: "Property Levy", taxAmount: 200 },
+  { index: 4, kind: "tax", name: "Income Tax", taxAmount: undefined },
   { index: 5, kind: "transit", name: "South Transit", price: 200 },
   { index: 6, kind: "property", name: "Kazan", group: "cove", price: 100, rent: 6 },
   { index: 7, kind: "twist", name: "Twist" },
@@ -89,7 +89,7 @@ export const BOARD: BoardTile[] = [
   { index: 35, kind: "transit", name: "East Transit", price: 200 },
   { index: 36, kind: "twist", name: "Twist" },
   { index: 37, kind: "property", name: "Los Angeles", group: "sapphire", price: 350, rent: 35 },
-  { index: 38, kind: "tax", name: "Luxury Toll", taxAmount: 100 },
+  { index: 38, kind: "tax", name: "Luxury Toll", taxAmount: 75 },
   { index: 39, kind: "property", name: "New York", group: "sapphire", price: 400, rent: 50 },
 ];
 

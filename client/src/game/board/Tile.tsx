@@ -93,9 +93,14 @@ function TileIcon({ kind }: { kind: BoardTile["kind"] }) {
       );
     case "tax":
       return (
-        <svg viewBox="0 0 24 24" className="w-3.5 h-3.5 sm:w-4 sm:h-4">
-          <circle cx="12" cy="12" r="8" {...common} />
-          <path d="M9 15c0-1.5 3-1.5 3-3s-3-1.5-3-3 M12 7v1 M12 16v1" {...common} />
+        <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="2" y="5" width="20" height="14" rx="2" />
+          <rect x="4" y="7" width="16" height="10" rx="1" strokeDasharray="1 1" opacity="0.7" />
+          <circle cx="12" cy="12" r="2.5" />
+          <path d="M12 10.5v3M11.2 11c0-.4.3-.7.8-.7s.8.3.8.7-.3.7-.8.7-.8.3-.8.7.3.7.8.7" />
+          <path d="M5.5 8.5h.01M18.5 8.5h.01M5.5 15.5h.01M18.5 15.5h.01" />
+          <path d="M2 10c1.5 0 2.5 1 2.5 2s-1 2-2.5 2" opacity="0.6" />
+          <path d="M22 10c-1.5 0-2.5 1-2.5 2s1 2 2.5 2" opacity="0.6" />
         </svg>
       );
     case "twist":
@@ -215,7 +220,11 @@ export default function Tile({
         <TileIcon kind={tile.kind} />
       </div>
       <span className="text-[7.5px] sm:text-[8.5px] leading-tight text-parchment/80 line-clamp-2">{tile.name}</span>
-      {tile.kind === "tax" && <span className="text-[7px] font-mono text-slate">${tile.taxAmount}</span>}
+      {tile.index === 4 ? (
+        <span className="text-[7.5px] font-mono text-signal">5%</span>
+      ) : tile.kind === "tax" ? (
+        <span className="text-[7.5px] font-mono text-signal">${tile.taxAmount}</span>
+      ) : null}
       <Occupants occupants={occupants} />
     </div>
   );

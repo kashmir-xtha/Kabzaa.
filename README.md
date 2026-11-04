@@ -118,11 +118,11 @@ mid-game), so there's no real cost to it, and it means the client can never
 drift out of sync with the server.
 
 **Request flow for a typical action** (e.g. rolling dice):
-1. Client calls `rollDice()` from `useRoom()` → emits a `"game:roll"`
+1. Client calls `rollDice()` from `useRoom()` - defined at RoomContext.tsx → emits a `"game:roll"`
    socket event with an ack callback.
 2. `socketHandlers.ts` receives it, calls `roomManager.rollDice(socket.id)`.
 3. `RoomManager` looks up the room and player, checks it's actually their
-   turn and the game has started, then calls `performRoll(room)` in
+   turn and the game has started, then calls `performRoll(room)` from
    `engine.ts`.
 4. `engine.ts` mutates the room in place (moves the token, charges tax,
    charges rent via `economy.ts`, maybe triggers bankruptcy, sets the next

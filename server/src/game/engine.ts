@@ -57,6 +57,12 @@ function movePlayer(room: Room, player: Player, steps: number): MoveResult {
     addLog(room, `${player.nickname} paid $${tile.taxAmount} for ${tile.name}.`);
   }
 
+  if (tile.index === 4) {
+    const taxAmount = Math.floor(player.money * 0.05)
+    player.money -= taxAmount;
+    addLog(room, `${player.nickname} paid a 5% Income Tax of $${taxAmount}`);
+  }
+
   let purchasable = false;
   let creditorId: string | undefined;
   if (isPurchasable(tile)) {
@@ -240,18 +246,22 @@ export function playWager(room: Room, playerId: string, betAmount: number) {
   if (player.money < betAmount) throw new GameError("Insufficient funds for this bet.");
 
   // Roll 2 dice for the wager
-  const d1 = randDie();
-  const d2 = randDie();
-  const sum = d1 + d2;
+  const die1 = randDie();
+  const die2 = randDie();
+  const sum = die1 + die2;
+  const isDoubles = die1 === die2;
+  
+  // trigger the dice animation after entering bet
+  room.lastRoll = {die1, die2, isDoubles }
 
   if (sum >= 7) {
     // Win: Double wager back (profit = betAmount)
     player.money += betAmount;
-    addLog(room, `[WAGER WIN] ${player.nickname} rolled ${d1}+${d2}=${sum} (7-12) and won $${betAmount * 2}!`);
+    addLog(room, `[WAGER WIN] ${player.nickname} rolled ${die1}+${die2}=${sum} (7-12) and won $${betAmount * 2}!`);
   } else {
     // Lose: Deduct bet
     player.money -= betAmount;
-    addLog(room, `[WAGER LOSS] ${player.nickname} rolled ${d1}+${d2}=${sum} (1-6) and lost $${betAmount}.`);
+    addLog(room, `[WAGER LOSS] ${player.nickname} rolled ${die1}+${die2}=${sum} (1-6) and lost $${betAmount}.`);
   }
 
   // Resume normal post-landing flow
