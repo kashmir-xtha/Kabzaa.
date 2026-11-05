@@ -26,6 +26,12 @@ function getEffectiveRent(
   if (!ownerId || !ownership) return undefined;
   if (room && room.mortgaged && room.mortgaged[tile.index]) return 0;
 
+  // If the owner is locked up in holding, rent is 0!
+  if (room && room.players) {
+    const owner = room.players.find((p) => p.id === ownerId);
+    if (owner && owner.inJail) return 0;
+  }
+
   if (tile.kind === "property") {
     const base = tile.rent ?? 0;
     if (houses > 0) {
@@ -55,11 +61,13 @@ export default function Board({
   players,
   ownership,
   houses,
+  bountyPool = 100,
   children,
 }: {
   players: Player[];
   ownership: Record<number, string>;
   houses: Record<number, number>;
+  bountyPool?: number;
   children: ReactNode;
 }) {
   const byPosition = new Map<number, Player[]>();
@@ -107,6 +115,7 @@ export default function Board({
               ownerName={owner?.nickname}
               houses={tileHouses}
               rent={currentRent}
+              bountyPool={tile.index === 20 ? bountyPool : undefined}
             />
 
             {/* Overlapping Stacked Token Layout */}

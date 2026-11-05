@@ -150,6 +150,7 @@ export default function Game() {
             players={currentDisplayedRoom.players}
             ownership={currentDisplayedRoom.ownership}
             houses={currentDisplayedRoom.houses}
+            bountyPool={currentDisplayedRoom.bountyPool ?? 100}
           >
             <CenterPanel
               room={currentDisplayedRoom}
@@ -557,8 +558,9 @@ function PlayerHud({ room, playerId, currentTurnId }: { room: Room; playerId: st
           return (
             <div
               key={p.id}
-              className={`notch-sm flex items-center gap-2.5 px-2.5 py-1.5 border transition-colors ${p.id === currentTurnId ? "border-amber bg-ink-raised-2" : "border-ink-border/50 bg-ink/40"
-                } ${p.bankrupt ? "opacity-40" : ""}`}
+              className={`notch-sm flex items-center gap-2.5 px-2.5 py-1.5 border transition-colors ${
+                p.id === currentTurnId ? "border-amber bg-ink-raised-2" : "border-ink-border/50 bg-ink/40"
+              } ${p.bankrupt ? "opacity-40" : ""}`}
             >
               <AvatarBadge id={p.avatar} size={30} />
               <div className="min-w-0 flex-1">
@@ -569,7 +571,10 @@ function PlayerHud({ room, playerId, currentTurnId }: { room: Room; playerId: st
 
                   {/* Prison Icon & Counter Badge */}
                   {prisonVisits > 0 && (
-                    <div className="flex gap-0.5 ml-auto text-signal bg-signal/10 border border-signal/30 pt-0.5 px-1 rounded text-[9px] font-mono" title={`Jailed ${prisonVisits} ${prisonVisits === 1 ? "time" : "times"} • Bail cost increases by $50 per sentence (Current: $${prisonVisits * 50})`}>
+                    <div
+                      className="flex items-center gap-0.5 ml-auto text-signal bg-signal/10 border border-signal/30 pt-0.5 px-1 rounded text-[9px] font-mono shrink-0"
+                      title={`Jailed ${prisonVisits} ${prisonVisits === 1 ? "time" : "times"}. Bail cost increases by $50 per sentence (Current: $${prisonVisits * 50})`}
+                    >
                       <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" className="w-3 h-3">
                         <circle cx="50" cy="38" r="18" fill="#e5484d" />
                         <path d="M20,88 C20,68 32,60 50,60 C68,60 80,68 80,88 Z" fill="#e5484d" />
@@ -585,7 +590,8 @@ function PlayerHud({ room, playerId, currentTurnId }: { room: Room; playerId: st
                     <>
                       <PlayerMoneyDisplay money={p.money} />
                       {ownedCount(p.id) > 0 && <span>{ownedCount(p.id)} owned</span>}
-                      {p.inJail && <span className="text-signal font-sans">Holding</span>}
+                      {p.inJail && <span className="text-signal font-sans font-medium">Holding</span>}
+                      {p.onVacation && <span className="text-blue-400 font-sans font-medium">Vacation</span>}
                     </>
                   )}
                 </div>

@@ -38,6 +38,7 @@ export interface Player {
   doublesCount: number;
   bankrupt: boolean;
   prisonCount?: number; // Added to track total prison visits
+  onVacation: boolean;
 }
 
 export interface DiceRoll {
@@ -88,6 +89,7 @@ export interface Room {
   createdAt: number;
   turnOrder: string[];
   currentTurnIndex: number;
+  bountyPool: number;
   turnPhase: TurnPhase;
   lastRoll: DiceRoll | null;
   log: LogEntry[];

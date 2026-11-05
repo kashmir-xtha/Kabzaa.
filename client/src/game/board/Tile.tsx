@@ -132,6 +132,7 @@ export default function Tile({
   ownerName,
   houses = 0,
   rent,
+  bountyPool,
 }: {
   tile: BoardTile;
   edge: Edge;
@@ -141,18 +142,24 @@ export default function Tile({
   ownerName?: string;
   houses?: number;
   rent?: number;
+  bountyPool?: number;
 }) {
   const base = "relative flex w-full h-full bg-ink-raised border border-ink-border/60 overflow-hidden";
 
   if (isCorner) {
     return (
-      <div className={`${base} flex-col items-center justify-center gap-0.5 text-center p-0.5`} title={tile.name}>
+      <div className={`${base} flex-col items-center justify-center gap-0.5 text-center p-0.5`} title={tile.description}>
         <div className="text-amber">
           <TileIcon kind={tile.kind} />
         </div>
         <span className="text-[8px] sm:text-[9.5px] font-semibold leading-tight text-parchment/90 line-clamp-1">
           {tile.name}
         </span>
+
+        {tile.index === 20 && bountyPool !== undefined ? (
+          <span className="text-[8px] font-mono font-bold text-teal">${bountyPool}</span>
+        ) : null}
+
         <Occupants occupants={occupants} />
       </div>
     );
