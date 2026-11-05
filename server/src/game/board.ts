@@ -14,6 +14,7 @@ export interface BoardTile {
   index: number;
   kind: TileKind;
   name: string;
+  description?: string;
   group?: string;
   price?: number;
   taxAmount?: number;
@@ -51,7 +52,7 @@ export const LAND_START_AMOUNT = 500;      // Awarded when landing directly on S
 export const JAIL_BAIL = 50;
 
 export const BOARD: BoardTile[] = [
-  { index: 0, kind: "start", name: "Start" },
+  { index: 0, kind: "start", name: "Start", description: "Landing here grants a $500 cash bonus!" },
   { index: 1, kind: "property", name: "Kathmandu", group: "ash", price: 60, rent: 2 },
   { index: 2, kind: "windfall", name: "Windfall" },
   { index: 3, kind: "property", name: "Pokhara", group: "ash", price: 60, rent: 4 },
@@ -61,7 +62,7 @@ export const BOARD: BoardTile[] = [
   { index: 7, kind: "twist", name: "Twist" },
   { index: 8, kind: "property", name: "Petersburg", group: "cove", price: 100, rent: 6 },
   { index: 9, kind: "property", name: "Moscow", group: "cove", price: 120, rent: 8 },
-  { index: 10, kind: "wager", name: "High Stakes" },
+  { index: 10, kind: "wager", name: "High Stakes", description: "Gamble cash — roll 7+ to double your bet!" },
   { index: 11, kind: "property", name: "Valencia", group: "orchid", price: 140, rent: 10 },
   { index: 12, kind: "utility", name: "Hydro Works", price: 150 },
   { index: 13, kind: "property", name: "Barcelona", group: "orchid", price: 140, rent: 10 },
@@ -71,7 +72,7 @@ export const BOARD: BoardTile[] = [
   { index: 17, kind: "windfall", name: "Windfall" },
   { index: 18, kind: "property", name: "Frankfurt", group: "marigold", price: 180, rent: 14 },
   { index: 19, kind: "property", name: "Munich", group: "marigold", price: 200, rent: 16 },
-  { index: 20, kind: "rest", name: "Vacation" },
+  { index: 20, kind: "rest", name: "Vacation", description: "Collect the Bounty Pool (accumulated from taxes, lost bets, & bail) with guaranteed $100, but you skip a turn!" },
   { index: 21, kind: "property", name: "Osaka", group: "garnet", price: 220, rent: 18 },
   { index: 22, kind: "twist", name: "Twist" },
   { index: 23, kind: "property", name: "Yokohama", group: "garnet", price: 220, rent: 18 },
@@ -81,7 +82,7 @@ export const BOARD: BoardTile[] = [
   { index: 27, kind: "property", name: "Manchester", group: "gold", price: 260, rent: 22 },
   { index: 28, kind: "utility", name: "Power Co.", price: 150 },
   { index: 29, kind: "property", name: "London", group: "gold", price: 280, rent: 24 },
-  { index: 30, kind: "jail", name: "Prison" },
+  { index: 30, kind: "jail", name: "Prison", description: "Locked in! Your owned properties collect zero rent while you're jailed." },
   { index: 31, kind: "property", name: "Sharjah", group: "emerald", price: 300, rent: 26 },
   { index: 32, kind: "property", name: "Abu Dhabi", group: "emerald", price: 300, rent: 26 },
   { index: 33, kind: "windfall", name: "Windfall" },

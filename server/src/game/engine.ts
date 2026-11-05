@@ -54,13 +54,23 @@ function movePlayer(room: Room, player: Player, steps: number): MoveResult {
 
   if (tile.kind === "tax" && tile.taxAmount) {
     player.money -= tile.taxAmount;
+    room.bountyPool = (room.bountyPool || 0) + tile.taxAmount;
     addLog(room, `${player.nickname} paid $${tile.taxAmount} for ${tile.name}.`);
   }
 
   if (tile.index === 4) {
     const taxAmount = Math.floor(player.money * 0.05)
     player.money -= taxAmount;
+    room.bountyPool = (room.bountyPool || 0) + taxAmount;
     addLog(room, `${player.nickname} paid a 5% Income Tax of $${taxAmount}`);
+  }
+
+  if (tile.index === 20) {
+    const winnings = room.bountyPool;
+    player.money += winnings;
+    player.onVacation = true;
+    addLog(room, `🎉 [BOUNTY JACKPOT] ${player.nickname} landed on Vacation and collected the $${winnings} Bounty Pool!`);
+    room.bountyPool = 100; // reset back to the initial pool
   }
 
   let purchasable = false;
@@ -70,10 +80,14 @@ function movePlayer(room: Room, player: Player, steps: number): MoveResult {
     if (!ownerId) {
       purchasable = true;
     } else if (ownerId !== player.id) {
-      if (sameTeam(room, player.id, ownerId)) {
+      const owner = room.players.find((p) => p.id === ownerId);
+
+      // Check if the owner is locked up in Holding (Prison)
+      if (owner && owner.inJail) {
+        addLog(room, `${player.nickname} landed on ${owner.nickname}'s property, but since ${owner.nickname} is in Holding, no rent is due!`);
+      } else if (sameTeam(room, player.id, ownerId)) {
         addLog(room, `${player.nickname} owes no rent — same team.`);
       } else {
-        const owner = room.players.find((p) => p.id === ownerId);
         const rent = computeRent(room, tile, ownerId);
         if (owner && rent > 0) {
           player.money -= rent;
@@ -162,6 +176,7 @@ export function initializeGame(room: Room) {
   }
   room.turnOrder = order;
   room.currentTurnIndex = 0;
+  room.bountyPool = 100;
   room.turnPhase = "rolling";
   room.lastRoll = null;
   room.log = [];
@@ -182,6 +197,7 @@ export function initializeGame(room: Room) {
     p.doublesCount = 0;
     p.bankrupt = false;
     p.prisonCount = 0;
+    p.onVacation = false;
   });
 
   const first = room.players.find((p) => p.id === order[0]);
@@ -209,10 +225,9 @@ export function performRoll(room: Room, forcedDie1?: number, forcedDie2?: number
       const result = movePlayer(room, player, die1 + die2);
       handlePostMove(room, player, result, "rolled");
     } else if (player.jailTurns >= 3) {
-      player.money -= currentBail;
       player.inJail = false;
       player.jailTurns = 0;
-      addLog(room, `${player.nickname} paid $${currentBail} bail after 3 tries and left Holding.`);
+      addLog(room, `${player.nickname} left Holding after 3 unsuccesfull tries and rolled the dice.`);
       const result = movePlayer(room, player, die1 + die2);
       handlePostMove(room, player, result, "rolled");
     } else {
@@ -250,9 +265,9 @@ export function playWager(room: Room, playerId: string, betAmount: number) {
   const die2 = randDie();
   const sum = die1 + die2;
   const isDoubles = die1 === die2;
-  
+
   // trigger the dice animation after entering bet
-  room.lastRoll = {die1, die2, isDoubles }
+  room.lastRoll = { die1, die2, isDoubles }
 
   if (sum >= 7) {
     // Win: Double wager back (profit = betAmount)
@@ -261,6 +276,7 @@ export function playWager(room: Room, playerId: string, betAmount: number) {
   } else {
     // Lose: Deduct bet
     player.money -= betAmount;
+    room.bountyPool = (room.bountyPool || 0) + betAmount;
     addLog(room, `[WAGER LOSS] ${player.nickname} rolled ${die1}+${die2}=${sum} (1-6) and lost $${betAmount}.`);
   }
 
@@ -281,6 +297,7 @@ export function payBailAndRoll(room: Room) {
   const currentBail = (player.prisonCount || 1) * JAIL_BAIL; // Scaled bail calculation
 
   player.money -= currentBail;
+  room.bountyPool = (room.bountyPool || 0) + currentBail;
   player.inJail = false;
   player.jailTurns = 0;
   addLog(room, `${player.nickname} paid $${currentBail} to leave Holding early.`);
@@ -369,7 +386,20 @@ export function unmortgageTile(room: Room, playerId: string, tileIndex: number) 
 export function endTurn(room: Room) {
   const finishing = currentPlayer(room);
   finishing.doublesCount = 0;
-  room.currentTurnIndex = (room.currentTurnIndex + 1) % room.turnOrder.length;
+
+  let loops = 0;
+  while (loops < room.turnOrder.length) {
+    room.currentTurnIndex = (room.currentTurnIndex + 1) % room.turnOrder.length;
+    const nextPlayer = currentPlayer(room);
+    if (nextPlayer.onVacation) {
+      nextPlayer.onVacation = false; // Consume skip turn
+      addLog(room, `${nextPlayer.nickname} is resting on Vacation and skips their turn.`);
+      loops++;
+      continue;
+    }
+    break;
+  }
+
   room.turnPhase = "rolling";
   room.lastRoll = null;
   room.pendingPostPurchasePhase = null;

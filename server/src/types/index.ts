@@ -37,6 +37,7 @@ export interface Player {
   doublesCount: number;
   bankrupt: boolean;
   prisonCount?: number;
+  onVacation: boolean;
 }
 
 export interface DiceRoll {
@@ -90,6 +91,7 @@ export interface Room {
   // Game state (meaningful once status !== "lobby")
   turnOrder: string[];
   currentTurnIndex: number;
+  bountyPool: number;
   turnPhase: TurnPhase;
   lastRoll: DiceRoll | null;
   log: LogEntry[];
