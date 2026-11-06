@@ -5,8 +5,6 @@ import {
   HOTEL_LEVEL,
   MAX_HOUSES,
   TRANSIT_RENTS,
-  UTILITY_RENT_MULTIPLIER_BOTH,
-  UTILITY_RENT_MULTIPLIER_ONE,
   groupHouseCost,
   type BoardTile,
 } from "./board.js";
@@ -55,7 +53,7 @@ function isMortgaged(room: Room, tileIndex: number): boolean {
 /** Rent owed to `ownerId` for landing on `tile`, given the current room
  * state (group monopolies, houses/hotels, transit/utility counts, last
  * dice roll). Mortgaged tiles never collect rent. */
-export function computeRent(room: Room, tile: BoardTile, ownerId: string): number {
+export function computeRent(room: Room, tile: BoardTile, ownerId: string, landingPlayerId?: string): number {
   if (isMortgaged(room, tile.index)) return 0;
 
   if (tile.kind === "property") {
@@ -73,9 +71,28 @@ export function computeRent(room: Room, tile: BoardTile, ownerId: string): numbe
   }
 
   if (tile.kind === "utility") {
-    const count = ownedCountOfKind(room, ownerId, "utility");
-    const diceTotal = (room.lastRoll?.die1 ?? 0) + (room.lastRoll?.die2 ?? 0);
-    return diceTotal * (count >= 2 ? UTILITY_RENT_MULTIPLIER_BOTH : UTILITY_RENT_MULTIPLIER_ONE);
+    let totalHouses = 0;
+    let totalHotels = 0;
+
+    // Count the houses and hotels owned by the player landing on the utility (Adam)
+    if (room.houses && room.ownership && landingPlayerId) {
+      Object.entries(room.ownership).forEach(([tileIdxStr, currentOwnerId]) => {
+        if (currentOwnerId === landingPlayerId) {
+          const idx = Number(tileIdxStr);
+          const count = room.houses[idx] ?? 0;
+
+          if (count >= 5) {
+            totalHotels += 1; // Level 5 is a Hotel ($40)
+            totalHouses += 4;
+          } else if (count > 0) {
+            totalHouses += count; // Levels 1-4 are Houses ($20 each)
+          }
+        }
+      });
+    }
+
+    // $20 per individual house + $40 per hotel owned by the visitor
+    return (totalHouses * 20) + (totalHotels * 40);
   }
 
   return 0;

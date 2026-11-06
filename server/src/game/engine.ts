@@ -28,6 +28,7 @@ export function addLog(room: Room, message: string) {
 interface MoveResult {
   goToJail: boolean;
   isWagerTile: boolean; // Added flag for Tile 10 wager
+  isVacationTile: boolean;
   purchasable: boolean;
   creditorId?: string;
 }
@@ -88,12 +89,18 @@ function movePlayer(room: Room, player: Player, steps: number): MoveResult {
       } else if (sameTeam(room, player.id, ownerId)) {
         addLog(room, `${player.nickname} owes no rent — same team.`);
       } else {
-        const rent = computeRent(room, tile, ownerId);
+        const rent = computeRent(room, tile, ownerId, player.id);
         if (owner && rent > 0) {
           player.money -= rent;
           owner.money += rent;
           creditorId = owner.id;
-          addLog(room, `${player.nickname} paid $${rent} rent to ${owner.nickname}.`);
+
+          if (tile.kind === "utility") {
+            addLog(room, `${player.nickname} paid $${rent} utility bill to ${owner.nickname}. $20 for each house and $40 for each hotel, ${player.nickname} owned!`);
+          }
+          else {
+            addLog(room, `${player.nickname} paid $${rent} rent to ${owner.nickname}.`);
+          }
         }
       }
     }
@@ -101,8 +108,9 @@ function movePlayer(room: Room, player: Player, steps: number): MoveResult {
 
   const goToJail = tile.kind === "jail" || player.position === JAIL_POSITION;
   const isWagerTile = tile.kind === "wager";
+  const isVacationTile = tile.index === 20;
 
-  return { goToJail, isWagerTile, purchasable, creditorId };
+  return { goToJail, isWagerTile, isVacationTile, purchasable, creditorId };
 }
 
 function sendToJail(room: Room, player: Player) {
@@ -148,6 +156,12 @@ function handlePostMove(room: Room, player: Player, result: MoveResult, phaseIfN
   if (result.isWagerTile) {
     room.turnPhase = "awaiting-wager" as TurnPhase; // Pause turn to prompt player to bet
     room.pendingPostPurchasePhase = phaseIfNoDecision;
+    return;
+  }
+
+  if (result.isVacationTile) {
+    room.turnPhase = "rolled";
+    room.pendingPostPurchasePhase = null;
     return;
   }
 

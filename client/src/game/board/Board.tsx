@@ -9,8 +9,6 @@ import type { Player, Room } from "../../types";
 const HOUSE_RENT_MULTIPLIERS = [5, 15, 45, 80, 125];
 const HOTEL_LEVEL = 5;
 const TRANSIT_RENTS = [25, 50, 100, 200];
-const UTILITY_RENT_MULTIPLIER_ONE = 4;
-const UTILITY_RENT_MULTIPLIER_BOTH = 10;
 
 function ownedCountOfKind(ownership: Record<number, string>, ownerId: string, kind: BoardTile["kind"]): number {
   return BOARD.filter((t) => t.kind === kind && ownership[t.index] === ownerId).length;
@@ -45,13 +43,6 @@ function getEffectiveRent(
   if (tile.kind === "transit") {
     const count = ownedCountOfKind(ownership, ownerId, "transit");
     return TRANSIT_RENTS[Math.min(Math.max(count - 1, 0), TRANSIT_RENTS.length - 1)] ?? 25;
-  }
-
-  if (tile.kind === "utility") {
-    const count = ownedCountOfKind(ownership, ownerId, "utility");
-    const estimatedDiceTotal = 7;
-    const multiplier = count >= 2 ? UTILITY_RENT_MULTIPLIER_BOTH : UTILITY_RENT_MULTIPLIER_ONE;
-    return estimatedDiceTotal * multiplier;
   }
 
   return undefined;

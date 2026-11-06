@@ -186,7 +186,7 @@ export default function Tile({
           </div>
         )}
 
-        <div className="p-0.5 flex flex-col justify-between h-full w-full relative z-10" title={ownerName ? `${tile.name} (Owned by ${ownerName})` : tile.name}>
+        <div className="p-0.5 flex flex-col justify-between h-full w-full relative z-10" title={tile.kind === "utility" ? `Pay $20 for each house and $40 for each hotel owned ${ownerName ? `to ${ownerName}` : ""}` : ownerName ? `${tile.name} (Owned by ${ownerName})` : tile.name}>
           <div className="flex items-center justify-between">
             <span className="text-[7.5px] sm:text-[8.5px] leading-tight font-medium text-parchment/90 line-clamp-2 drop-shadow-xs">
               {tile.name}

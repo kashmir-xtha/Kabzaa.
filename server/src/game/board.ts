@@ -64,7 +64,7 @@ export const BOARD: BoardTile[] = [
   { index: 9, kind: "property", name: "Moscow", group: "cove", price: 120, rent: 8 },
   { index: 10, kind: "wager", name: "High Stakes", description: "Gamble cash — roll 7+ to double your bet!" },
   { index: 11, kind: "property", name: "Valencia", group: "orchid", price: 140, rent: 10 },
-  { index: 12, kind: "utility", name: "Hydro Works", price: 150 },
+  { index: 12, kind: "utility", name: "Hydro Works", price: 250 },
   { index: 13, kind: "property", name: "Barcelona", group: "orchid", price: 140, rent: 10 },
   { index: 14, kind: "property", name: "Madrid", group: "orchid", price: 160, rent: 12 },
   { index: 15, kind: "transit", name: "West Transit", price: 200 },
@@ -80,7 +80,7 @@ export const BOARD: BoardTile[] = [
   { index: 25, kind: "transit", name: "North Transit", price: 200 },
   { index: 26, kind: "property", name: "Birmingham", group: "gold", price: 260, rent: 22 },
   { index: 27, kind: "property", name: "Manchester", group: "gold", price: 260, rent: 22 },
-  { index: 28, kind: "utility", name: "Power Co.", price: 150 },
+  { index: 28, kind: "utility", name: "Power Co.", price: 250 },
   { index: 29, kind: "property", name: "London", group: "gold", price: 280, rent: 24 },
   { index: 30, kind: "jail", name: "Prison", description: "Locked in! Your owned properties collect zero rent while you're jailed." },
   { index: 31, kind: "property", name: "Sharjah", group: "emerald", price: 300, rent: 26 },
@@ -95,8 +95,6 @@ export const BOARD: BoardTile[] = [
 ];
 
 export const TRANSIT_RENTS = [25, 50, 100, 200];
-export const UTILITY_RENT_MULTIPLIER_ONE = 4;
-export const UTILITY_RENT_MULTIPLIER_BOTH = 10;
 
 export function tileAt(index: number): BoardTile {
   return BOARD[((index % 40) + 40) % 40];
