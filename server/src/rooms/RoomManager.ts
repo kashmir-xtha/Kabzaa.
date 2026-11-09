@@ -72,6 +72,7 @@ export class RoomManager {
       createdAt: Date.now(),
       turnOrder: [],
       currentTurnIndex: 0,
+      bountyPool: 100,
       turnPhase: "rolling",
       lastRoll: null,
       log: [],
@@ -492,6 +493,7 @@ export class RoomManager {
       jailTurns: 0,
       doublesCount: 0,
       bankrupt: false,
+      onVacation: false,
     };
   }
 

@@ -4,6 +4,7 @@ import { avatarColor } from "../avatars";
 import type { Player } from "../../types";
 import jail from "../../assets/jail.png";
 import vacation from "../../assets/vacation.png";
+import treasure from "../../assets/treasure.png"
 
 const BAR_SIDE: Record<Edge, string> = {
   bottom: "border-t-2 sm:border-t-4",
@@ -105,18 +106,26 @@ function TileIcon({ kind }: { kind: BoardTile["kind"] }) {
       );
     case "twist":
       return (
-        <svg viewBox="0 0 24 24" className="w-3.5 h-3.5 sm:w-4 sm:h-4">
-          <path d="M9 9a3 3 0 1 1 3 3v2" {...common} />
-          <circle cx="12" cy="17.5" r="0.8" fill="currentColor" stroke="none" />
+        <svg viewBox="0 0 24 24" className="w-7 h-7">
+          {/* Soft background circle */}
+          <circle cx="12" cy="12" r="10" fill="currentColor" fillOpacity="0.12" />
+
+          {/* Main curve */}
+          <path
+            d="M9.5 9C9.5 7.61929 10.6193 6.5 12 6.5C13.3807 6.5 14.5 7.61929 14.5 9C14.5 10.15 13.7 11.1 12.65 11.4C12.1 11.55 12 12.05 12 12.5V13.5"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
+
+          {/* Dot */}
+          <circle cx="12" cy="16.75" r="1.25" fill="currentColor" />
         </svg>
       );
-    case "windfall":
+    case "treasure":
       return (
-        <svg viewBox="0 0 24 24" className="w-3.5 h-3.5 sm:w-4 sm:h-4">
-          <rect x="4" y="10" width="16" height="9" rx="1" {...common} />
-          <path d="M4 10l8-6 8 6" {...common} />
-          <path d="M12 13v6" {...common} />
-        </svg>
+        <img src={treasure} height="24rem" width="24rem" />
       );
     default:
       return null;
@@ -215,10 +224,10 @@ export default function Tile({
   const tint =
     tile.kind === "tax"
       ? "text-signal"
-      : tile.kind === "twist" || tile.kind === "wager"
+      : tile.kind === "wager"
         ? "text-amber"
-        : tile.kind === "windfall"
-          ? "text-teal"
+        : tile.kind === "twist"
+          ? "text-purple-500"
           : "text-slate";
 
   return (

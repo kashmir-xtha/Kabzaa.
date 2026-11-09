@@ -8,7 +8,7 @@ export type TileKind =
   | "utility"
   | "tax"
   | "twist"
-  | "windfall";
+  | "treasure";
 
 export interface BoardTile {
   index: number;
@@ -54,7 +54,7 @@ export const JAIL_BAIL = 50;
 export const BOARD: BoardTile[] = [
   { index: 0, kind: "start", name: "Start", description: "Landing here grants a $500 cash bonus!" },
   { index: 1, kind: "property", name: "Kathmandu", group: "ash", price: 60, rent: 2 },
-  { index: 2, kind: "windfall", name: "Windfall" },
+  { index: 2, kind: "treasure", name: "Treasure" },
   { index: 3, kind: "property", name: "Pokhara", group: "ash", price: 60, rent: 4 },
   { index: 4, kind: "tax", name: "Income Tax", taxAmount: undefined },
   { index: 5, kind: "transit", name: "South Transit", price: 200 },
@@ -69,7 +69,7 @@ export const BOARD: BoardTile[] = [
   { index: 14, kind: "property", name: "Madrid", group: "orchid", price: 160, rent: 12 },
   { index: 15, kind: "transit", name: "West Transit", price: 200 },
   { index: 16, kind: "property", name: "Berlin", group: "marigold", price: 180, rent: 14 },
-  { index: 17, kind: "windfall", name: "Windfall" },
+  { index: 17, kind: "treasure", name: "Treasure" },
   { index: 18, kind: "property", name: "Frankfurt", group: "marigold", price: 180, rent: 14 },
   { index: 19, kind: "property", name: "Munich", group: "marigold", price: 200, rent: 16 },
   { index: 20, kind: "rest", name: "Vacation", description: "Collect the Bounty Pool (accumulated from taxes, lost bets, & bail) with guaranteed $100, but you skip a turn!" },
@@ -85,7 +85,7 @@ export const BOARD: BoardTile[] = [
   { index: 30, kind: "jail", name: "Prison", description: "Locked in! Your owned properties collect zero rent while you're jailed." },
   { index: 31, kind: "property", name: "Sharjah", group: "emerald", price: 300, rent: 26 },
   { index: 32, kind: "property", name: "Abu Dhabi", group: "emerald", price: 300, rent: 26 },
-  { index: 33, kind: "windfall", name: "Windfall" },
+  { index: 33, kind: "treasure", name: "Treasure" },
   { index: 34, kind: "property", name: "Dubai", group: "emerald", price: 320, rent: 28 },
   { index: 35, kind: "transit", name: "East Transit", price: 200 },
   { index: 36, kind: "twist", name: "Twist" },

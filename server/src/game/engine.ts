@@ -33,6 +33,63 @@ interface MoveResult {
   creditorId?: string;
 }
 
+function handleTreasure(room: Room, player: Player) {
+  const treasureEvents = [
+    {
+      text: "Recieved $50 Tihar bonus from work.",
+      action: (p: Player) => { p.money += 50; }
+    },
+    {
+      text: "Received a generous blessing of $100 by elders during Dashain Festival.",
+      action: (p: Player) => { p.money += 100; }
+    },
+    {
+      text: "Your old investment in a local hotel finally paid off! Collect $150.",
+      action: (p: Player) => { p.money += 150; }
+    },
+    {
+      text: "Received unexpected inheritance from a distant relative! Collect $200.",
+      action: (p: Player) => { p.money += 200; }
+    },
+    {
+      text: "Found ancient artifacts near an ancient temple! Sold to a museum for $250.",
+      action: (p: Player) => { p.money += 250; }
+    },
+    {
+      text: "A lucky lottery ticket turned out to be a winner! Gain $300.",
+      action: (p: Player) => { p.money += 300; }
+    },
+    {
+      text: "Your community service earned you a government grant! Collect 50% of Bounty Pool.",
+      action: (p: Player) => {
+        let cash = Math.floor(0.5 * room.bountyPool);
+        p.money -= cash;
+        room.bountyPool = (room.bountyPool || 100) - cash;
+      }
+    }
+    /// following maybe add to surprise
+    // {
+    //   text: "You discovered a forgotten treasure belonging to the community!. Add $150 to Bounty Pool.",
+    //   action: (p: Player) => {  
+    //     p.money += 0;
+    //     room.bountyPool = (room.bountyPool || 100) + 150; 
+    //   }
+    // },
+    // {
+    //   text: "You donated $100 to victims affected by flood.",
+    //   action: (p: Player) => { 
+    //     p.money -= 100; 
+    //     room.bountyPool = (room.bountyPool || 100) + 100; 
+    //   }
+    // },
+  ];
+
+  // Pick a random treasure event
+  const event = treasureEvents[Math.floor(Math.random() * treasureEvents.length)];
+  event.action(player);
+  addLog(room, `🧭 [TREASURE] ${player.nickname}: ${event.text}`);
+}
+
 /** Moves a player forward `steps` tiles: handles passing Start, tax tiles,
  * and auto-charging rent on an owned tile (waived between teammates). */
 function movePlayer(room: Room, player: Player, steps: number): MoveResult {
@@ -72,6 +129,10 @@ function movePlayer(room: Room, player: Player, steps: number): MoveResult {
     player.onVacation = true;
     addLog(room, `🎉 [BOUNTY JACKPOT] ${player.nickname} landed on Vacation and collected the $${winnings} Bounty Pool!`);
     room.bountyPool = 100; // reset back to the initial pool
+  }
+
+  if (tile.kind === "treasure") {
+    handleTreasure(room, player);
   }
 
   let purchasable = false;
