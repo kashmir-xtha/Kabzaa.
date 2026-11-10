@@ -36,37 +36,83 @@ interface MoveResult {
 function handleTreasure(room: Room, player: Player) {
   const treasureEvents = [
     {
-      text: "Recieved $50 Tihar bonus from work.",
-      action: (p: Player) => { p.money += 50; }
+      action: (p: Player, r: Room) => {
+        let totalGifted = 0;
+        let message = "It's your Birthday!"
+        // Filter out bankrupt players and the birthday player themselves
+        r.players.forEach((other) => {
+          if (other.id !== p.id && !other.bankrupt) {
+            // Deduct $50 (or whatever balance they have if under $50)
+            const giftAmount = Math.min(other.money, 50);
+            other.money -= giftAmount;
+            totalGifted += giftAmount;
+            message += `\n${other.nickname} send you a $${giftAmount} gift.`
+          }
+        });
+        p.money += totalGifted;
+        return message;
+      }
     },
     {
-      text: "Received a generous blessing of $100 by elders during Dashain Festival.",
-      action: (p: Player) => { p.money += 100; }
+      action: (p: Player) => {
+        p.money += 50;
+        return "Recieved $50 Tihar bonus from work.";
+      }
     },
     {
-      text: "Your old investment in a local hotel finally paid off! Collect $150.",
-      action: (p: Player) => { p.money += 150; }
+      action: (p: Player, r: Room) => {
+        // Find other non-bankrupt players
+        const others = r.players.filter((o) => o.id !== p.id && !o.bankrupt);
+        if (others.length === 0) {
+          p.money += 75;
+          return "Found a lost tourist backpack with $75 inside!";
+        }
+        // Pick a random target player
+        const target = others[Math.floor(Math.random() * others.length)];
+        const amount = Math.min(target.money, 75);
+        target.money -= amount;
+        p.money += amount;
+        return `You found ${target.nickname}'s wallet, collect $${amount}`;
+      }
     },
     {
-      text: "Received unexpected inheritance from a distant relative! Collect $200.",
-      action: (p: Player) => { p.money += 200; }
+      action: (p: Player) => {
+        p.money += 100;
+        return "Received a generous blessing of $100 by elders during Dashain Festival."
+      }
     },
     {
-      text: "Found ancient artifacts near an ancient temple! Sold to a museum for $250.",
-      action: (p: Player) => { p.money += 250; }
+      action: (p: Player) => {
+        p.money += 150;
+        return "Your old investment in a local hotel finally paid off! Collect $150.";
+      }
     },
     {
-      text: "A lucky lottery ticket turned out to be a winner! Gain $300.",
-      action: (p: Player) => { p.money += 300; }
+      action: (p: Player) => {
+        p.money += 200;
+        return "Received unexpected inheritance from a distant relative! Collect $200.";
+      }
     },
     {
-      text: "Your community service earned you a government grant! Collect 50% of Bounty Pool.",
+      action: (p: Player) => {
+        p.money += 250;
+        return "Found ancient artifacts near an ancient temple! Sold to a museum for $250.";
+      }
+    },
+    {
+      action: (p: Player) => {
+        p.money += 300;
+        return "A lucky lottery ticket turned out to be a winner! Gain $300.";
+      }
+    },
+    {
       action: (p: Player) => {
         let cash = Math.floor(0.5 * room.bountyPool);
         p.money -= cash;
         room.bountyPool = (room.bountyPool || 100) - cash;
+        return `You community service earned you a government grant! Collect 50% ($${cash}) of Bounty Pool.`;
       }
-    }
+    },
     /// following maybe add to surprise
     // {
     //   text: "You discovered a forgotten treasure belonging to the community!. Add $150 to Bounty Pool.",
@@ -86,8 +132,8 @@ function handleTreasure(room: Room, player: Player) {
 
   // Pick a random treasure event
   const event = treasureEvents[Math.floor(Math.random() * treasureEvents.length)];
-  event.action(player);
-  addLog(room, `🧭 [TREASURE] ${player.nickname}: ${event.text}`);
+  const message = event.action(player, room);
+  addLog(room, `🧭 [TREASURE]: ${message}`);
 }
 
 /** Moves a player forward `steps` tiles: handles passing Start, tax tiles,
