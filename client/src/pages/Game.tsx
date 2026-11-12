@@ -17,6 +17,7 @@ export default function Game() {
     playerId,
     rollDice,
     payBail,
+    usePass,
     endTurn,
     buyProperty,
     passPurchase,
@@ -161,6 +162,7 @@ export default function Game() {
               me={displayedMe}
               onRoll={rollDice}
               onPayBail={payBail}
+              onUsePass={usePass}
               onEndTurn={endTurn}
               onBuy={buyProperty}
               onPass={passPurchase}
@@ -286,6 +288,7 @@ function CenterPanel({
   me,
   onRoll,
   onPayBail,
+  onUsePass,
   onEndTurn,
   onBuy,
   onPass,
@@ -301,6 +304,7 @@ function CenterPanel({
   me: Player;
   onRoll: () => void;
   onPayBail: () => void;
+  onUsePass: () => void;
   onEndTurn: () => void;
   onBuy: () => void;
   onPass: () => void;
@@ -381,18 +385,29 @@ function CenterPanel({
                 <>
                   {me.inJail && room.turnPhase === "rolling" && (
                     <p className="text-[10px] text-slate leading-tight text-center mb-1">
-                      In Holding ({me.jailTurns}/3). Roll doubles or pay ${bailCost}.
+                      In Holding ({me.jailTurns}/3). Roll doubles{me.freePassCount > 0 ? ", use pass," : ""} or pay ${bailCost}.
                     </p>
                   )}
 
                   {room.turnPhase === "rolling" && me.inJail && (
-                    <button
-                      onClick={onPayBail}
-                      disabled={me.money < bailCost}
-                      className="notch-sm border border-ink-border py-1 text-xs text-parchment hover:border-amber disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
-                    >
-                      Pay ${bailCost} &amp; roll
-                    </button>
+                    <div className="flex gap-2 w-full">
+                      <button
+                        onClick={onPayBail}
+                        disabled={me.money < bailCost}
+                        className="flex-1 border border-ink-border py-1 text-xs text-parchment hover:border-amber disabled:opacity-40 cursor-pointer transition-colors"
+                      >
+                        Pay ${bailCost} &amp; roll
+                      </button>
+
+                      {me.freePassCount > 0 && (
+                        <button
+                          onClick={onUsePass}
+                          className="flex-1 border border-amber/40 bg-amber/10 py-1 text-xs text-amber hover:border-amber transition-colors font-medium cursor-pointer"
+                        >
+                          🎟️ Use Pass ({me.freePassCount})
+                        </button>
+                      )}
+                    </div>
                   )}
                 </>
               );
@@ -558,9 +573,8 @@ function PlayerHud({ room, playerId, currentTurnId }: { room: Room; playerId: st
           return (
             <div
               key={p.id}
-              className={`notch-sm flex items-center gap-2.5 px-2.5 py-1.5 border transition-colors ${
-                p.id === currentTurnId ? "border-amber bg-ink-raised-2" : "border-ink-border/50 bg-ink/40"
-              } ${p.bankrupt ? "opacity-40" : ""}`}
+              className={`notch-sm flex items-center gap-2.5 px-2.5 py-1.5 border transition-colors ${p.id === currentTurnId ? "border-amber bg-ink-raised-2" : "border-ink-border/50 bg-ink/40"
+                } ${p.bankrupt ? "opacity-40" : ""}`}
             >
               <AvatarBadge id={p.avatar} size={30} />
               <div className="min-w-0 flex-1">
@@ -592,6 +606,12 @@ function PlayerHud({ room, playerId, currentTurnId }: { room: Room; playerId: st
                       {ownedCount(p.id) > 0 && <span>{ownedCount(p.id)} owned</span>}
                       {p.inJail && <span className="text-signal font-sans font-medium">Holding</span>}
                       {p.onVacation && <span className="text-blue-400 font-sans font-medium">Vacation</span>}
+                      {/* --- Display Free Pass count if they have any --- */}
+                      {p.freePassCount && p.freePassCount > 0 ? (
+                        <span className="text-amber font-sans font-semibold bg-amber/10 border border-amber/30 px-1 rounded">
+                          🎟️ Pass {p.freePassCount > 1 ? `(${p.freePassCount})` : ""}
+                        </span>
+                      ) : null}
                     </>
                   )}
                 </div>

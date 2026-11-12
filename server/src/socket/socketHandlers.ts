@@ -171,6 +171,10 @@ export function registerSocketHandlers(io: Server, roomManager: RoomManager) {
       handle(() => roomManager.payBail(socket.id), ack);
     });
 
+    socket.on("game:usePass", (_payload: unknown, ack: Ack<Room>) => {
+      handle(() => roomManager.usePass(socket.id), ack);
+    });
+
     socket.on("game:endTurn", (_payload: unknown, ack: Ack<Room>) => {
       handle(() => roomManager.endPlayerTurn(socket.id), ack);
     });

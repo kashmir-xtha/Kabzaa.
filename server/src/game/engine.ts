@@ -113,6 +113,12 @@ function handleTreasure(room: Room, player: Player) {
         return `You community service earned you a government grant! Collect 50% ($${cash}) of Bounty Pool.`;
       }
     },
+    {
+      action: (p: Player) => {
+        p.freePassCount = (p.freePassCount || 0) + 1;
+        return "Found a Royal Amnesty Pardon! You earned a Free Pass to escape Holding for free.";
+      }
+    },
     /// following maybe add to surprise
     // {
     //   text: "You discovered a forgotten treasure belonging to the community!. Add $150 to Bounty Pool.",
@@ -319,6 +325,7 @@ export function initializeGame(room: Room) {
     p.bankrupt = false;
     p.prisonCount = 0;
     p.onVacation = false;
+    p.freePassCount = 0; 
   });
 
   const first = room.players.find((p) => p.id === order[0]);
@@ -422,6 +429,25 @@ export function payBailAndRoll(room: Room) {
   player.inJail = false;
   player.jailTurns = 0;
   addLog(room, `${player.nickname} paid $${currentBail} to leave Holding early.`);
+
+  const die1 = randDie();
+  const die2 = randDie();
+  const isDoubles = die1 === die2;
+  room.lastRoll = { die1, die2, isDoubles };
+  addLog(room, `${player.nickname} rolled ${die1} and ${die2}${isDoubles ? " — doubles!" : ""}.`);
+  player.doublesCount = isDoubles ? 1 : 0;
+
+  const result = movePlayer(room, player, die1 + die2);
+  handlePostMove(room, player, result, isDoubles ? "rolling" : "rolled");
+}
+
+export function useFreePassAndRoll(room: Room) {
+  const player = currentPlayer(room);
+  
+  player.freePassCount -= 1;
+  player.inJail = false;
+  player.jailTurns = 0;
+  addLog(room, `${player.nickname} used a Royal Amnesty Free Pass to escape Holding without paying bail!`);
 
   const die1 = randDie();
   const die2 = randDie();

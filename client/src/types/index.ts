@@ -39,6 +39,7 @@ export interface Player {
   bankrupt: boolean;
   prisonCount?: number; // Added to track total prison visits
   onVacation: boolean;
+  freePassCount: number;
 }
 
 export interface DiceRoll {

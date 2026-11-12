@@ -11,7 +11,7 @@ import {
   type TradeSide,
 } from "../types/index.js";
 import { generateRoomCode } from "../utils/roomCode.js";
-import { endTurn, initializeGame, payBailAndRoll, performRoll, buyCurrentTile, passCurrentPurchase, buildHouse, sellHouse, createTrade, resolveTrade, withdrawTrade, mortgageTile, unmortgageTile, declareBankruptcy, postChatMessage, forceCompleteTurn, playWager, skipWager } from "../game/engine.js";
+import { endTurn, initializeGame, payBailAndRoll, useFreePassAndRoll, performRoll, buyCurrentTile, passCurrentPurchase, buildHouse, sellHouse, createTrade, resolveTrade, withdrawTrade, mortgageTile, unmortgageTile, declareBankruptcy, postChatMessage, forceCompleteTurn, playWager, skipWager } from "../game/engine.js";
 import { JAIL_BAIL } from "../game/board.js";
 import { GameError } from "../utils/errors.js";
 import { isValidAvatar, pickUnusedAvatar } from "../utils/avatars.js";
@@ -324,6 +324,18 @@ export class RoomManager {
     if (!player.inJail) throw new GameError("You're not in Holding.");
     if (player.money < JAIL_BAIL) throw new GameError("You can't afford the bail.");
     payBailAndRoll(room);
+    this.scheduleTurnTimer(room);
+    return room;
+  }
+
+  usePass(socketId: string): Room {
+    const { room, player } = this.requirePlayer(socketId);
+    this.requireInProgress(room);
+    this.requireCurrentTurn(room, player);
+    if(room.turnPhase !== "rolling") throw new GameError("You've already rolled this turn.");
+    if (!player.inJail) throw new GameError("You are not in Holding.");
+    if (!player.freePassCount || player.freePassCount <= 0) throw new GameError("You don't have any Free Passes.");
+    useFreePassAndRoll(room);
     this.scheduleTurnTimer(room);
     return room;
   }

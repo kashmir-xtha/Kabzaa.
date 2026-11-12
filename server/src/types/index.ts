@@ -37,6 +37,7 @@ export interface Player {
   doublesCount: number;
   bankrupt: boolean;
   prisonCount?: number;
+  freePassCount: number;
   onVacation: boolean;
 }
 

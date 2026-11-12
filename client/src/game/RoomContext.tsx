@@ -31,6 +31,7 @@ interface RoomContextValue {
   startGame: () => void;
   rollDice: () => void;
   payBail: () => void;
+  usePass: () => void;
   endTurn: () => void;
   buyProperty: () => void;
   passPurchase: () => void;
@@ -168,6 +169,7 @@ export function RoomProvider({ children }: { children: ReactNode }) {
   const startGame = useCallback(() => void fireAndReport("room:start", {}), [fireAndReport]);
   const rollDice = useCallback(() => void fireAndReport("game:roll", {}), [fireAndReport]);
   const payBail = useCallback(() => void fireAndReport("game:payBail", {}), [fireAndReport]);
+  const usePass = useCallback(() => void fireAndReport("game:usePass", {}), [fireAndReport]);
   const endTurn = useCallback(() => void fireAndReport("game:endTurn", {}), [fireAndReport]);
   const buyProperty = useCallback(() => void fireAndReport("game:buyProperty", {}), [fireAndReport]);
   const passPurchase = useCallback(() => void fireAndReport("game:passPurchase", {}), [fireAndReport]);
@@ -240,6 +242,7 @@ export function RoomProvider({ children }: { children: ReactNode }) {
         startGame,
         rollDice,
         payBail,
+        usePass,
         endTurn,
         buyProperty,
         passPurchase,
