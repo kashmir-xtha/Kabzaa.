@@ -110,6 +110,7 @@ export interface Room {
   winnerTeamId: TeamId | null;
   /** Epoch ms when the current turn's timer expires, or null if disabled. */
   turnDeadline: number | null;
+  animationWaypoint?: number;
 }
 
 export const DEFAULT_SETTINGS: GameSettings = {

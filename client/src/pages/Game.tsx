@@ -71,7 +71,6 @@ export default function Game() {
     }
   }, [room]);
 
-  // Phase 1 finished: Dice finished shaking, start token walking step-by-step
   const handleRollComplete = () => {
     if (!pendingRoomRef.current) return;
     const targetRoom = pendingRoomRef.current;
@@ -86,29 +85,103 @@ export default function Game() {
       return;
     }
 
+    const waypoint = targetRoom.animationWaypoint;
+    const totalTiles = BOARD.length;
+
+    // --- TWO-STAGE ANIMATION FOR TWIST WAYPOINTS ---
+    if (waypoint !== undefined && waypoint !== oldPlayer.position && waypoint !== newPlayer.position) {
+      animationStateRef.current = "walking";
+      let currentPos = oldPlayer.position;
+      const stepsToWaypoint = (waypoint - currentPos + totalTiles) % totalTiles;
+      const stage1IntervalMs = Math.max(20, Math.floor(300 / (stepsToWaypoint || 1)));
+
+      const runStage2 = () => {
+        let pos = waypoint;
+        const diff = (newPlayer.position - waypoint + totalTiles) % totalTiles;
+        const isBackward = diff > 20; // Checks if moving backward (e.g. 37 steps = -3)
+        const stepsToTarget = isBackward ? (waypoint - newPlayer.position + totalTiles) % totalTiles : diff;
+        const stage2IntervalMs = Math.max(20, Math.floor(300 / (stepsToTarget || 1)));
+
+        const step2Interval = setInterval(() => {
+          if (pos === newPlayer.position || animationStateRef.current !== "walking") {
+            clearInterval(step2Interval);
+            animationStateRef.current = "idle";
+            if (pendingRoomRef.current) {
+              setDisplayedRoom(pendingRoomRef.current);
+            }
+            return;
+          }
+
+          if (isBackward) {
+            pos = (pos - 1 + totalTiles) % totalTiles;
+          } else {
+            pos = (pos + 1) % totalTiles;
+          }
+
+          setDisplayedRoom((prev) => {
+            if (!prev) return prev;
+            return {
+              ...prev,
+              players: prev.players.map((p) =>
+                p.id === turnPlayerId ? { ...p, position: pos } : p
+              ),
+            };
+          });
+        }, stage2IntervalMs);
+      };
+
+      const step1Interval = setInterval(() => {
+        if (currentPos === waypoint || animationStateRef.current !== "walking") {
+          clearInterval(step1Interval);
+          if (currentPos === waypoint) {
+            // Pause briefly on the Twist tile before starting secondary movement
+            setTimeout(runStage2, 50);
+          } else {
+            animationStateRef.current = "idle";
+            if (pendingRoomRef.current) {
+              setDisplayedRoom(pendingRoomRef.current);
+            }
+          }
+          return;
+        }
+
+        currentPos = (currentPos + 1) % totalTiles;
+
+        setDisplayedRoom((prev) => {
+          if (!prev) return prev;
+          return {
+            ...prev,
+            players: prev.players.map((p) =>
+              p.id === turnPlayerId ? { ...p, position: currentPos } : p
+            ),
+          };
+        });
+      }, stage1IntervalMs);
+
+      return;
+    }
+
+    // --- STANDARD SINGLE-STAGE WALK ---
     animationStateRef.current = "walking";
     let currentPos = oldPlayer.position;
     const targetPos = newPlayer.position;
-    const totalTiles = BOARD.length;
 
     const stepsToTake = (targetPos - currentPos + totalTiles) % totalTiles;
     const totalWalkTimeMs = 500;
     const stepIntervalMs = Math.max(20, Math.floor(totalWalkTimeMs / (stepsToTake || 1)));
 
     const stepInterval = setInterval(() => {
-      // Check if walk is finished or if safety fallback cleared the animation state
       if (currentPos === targetPos || animationStateRef.current !== "walking") {
         clearInterval(stepInterval);
         animationStateRef.current = "idle";
         if (pendingRoomRef.current) {
-          setDisplayedRoom(pendingRoomRef.current); // Atomic final state sync
+          setDisplayedRoom(pendingRoomRef.current);
         }
         return;
       }
 
       currentPos = (currentPos + 1) % totalTiles;
 
-      // Direct, light position update for the active player only
       setDisplayedRoom((prev) => {
         if (!prev) return prev;
         return {
@@ -427,7 +500,7 @@ function CenterPanel({
                 <div className="text-center">
                   <p className="text-xs font-bold text-amber uppercase tracking-wider">High Stakes Wager</p>
                   <p className="text-[11px] text-parchment leading-tight mt-0.5">
-                    Roll 2 dice: <span className="text-signal font-mono">1–6 Lose</span> | <span className="text-teal font-mono">7–12 Win Double</span>
+                    Roll 2 dice: <span className="text-signal font-mono">1–7 Lose</span> | <span className="text-teal font-mono">8–12 Win Double</span>
                   </p>
                 </div>
                 <div className="flex gap-1.5 justify-center">

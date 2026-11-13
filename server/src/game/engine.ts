@@ -108,7 +108,7 @@ function handleTreasure(room: Room, player: Player) {
     {
       action: (p: Player) => {
         let cash = Math.floor(0.5 * room.bountyPool);
-        p.money -= cash;
+        p.money += cash;
         room.bountyPool = (room.bountyPool || 100) - cash;
         return `You community service earned you a government grant! Collect 50% ($${cash}) of Bounty Pool.`;
       }
@@ -118,22 +118,7 @@ function handleTreasure(room: Room, player: Player) {
         p.freePassCount = (p.freePassCount || 0) + 1;
         return "Found a Royal Amnesty Pardon! You earned a Free Pass to escape Holding for free.";
       }
-    },
-    /// following maybe add to surprise
-    // {
-    //   text: "You discovered a forgotten treasure belonging to the community!. Add $150 to Bounty Pool.",
-    //   action: (p: Player) => {  
-    //     p.money += 0;
-    //     room.bountyPool = (room.bountyPool || 100) + 150; 
-    //   }
-    // },
-    // {
-    //   text: "You donated $100 to victims affected by flood.",
-    //   action: (p: Player) => { 
-    //     p.money -= 100; 
-    //     room.bountyPool = (room.bountyPool || 100) + 100; 
-    //   }
-    // },
+    }
   ];
 
   // Pick a random treasure event
@@ -142,9 +127,109 @@ function handleTreasure(room: Room, player: Player) {
   addLog(room, `🧭 [TREASURE]: ${message}`);
 }
 
+function handleTwist(room: Room, player: Player) {
+  const twistEvents = [
+    {
+      action: (p: Player, r: Room) => {
+        p.money -= 50;
+        r.bountyPool = (r.bountyPool || 100) + 50;
+        return "Parked motorcycle in 'NO PARKING'! Paid $50 fine.";
+      }
+    },
+    {
+      action: (p: Player, r: Room) => {
+        // Find other non-bankrupt players
+        const others = r.players.filter((o) => o.id !== p.id && !o.bankrupt);
+        if (others.length === 0) {
+          p.money -= 100;
+          return "Lost a $100 bet!";
+        }
+        // Pick a random target player
+        const target = others[Math.floor(Math.random() * others.length)];
+        target.money += 100;
+        p.money -= 100;
+        return `Lost a $100 bet with ${target.nickname}!`;
+      }
+    },
+    {
+      action: (p: Player, r: Room) => {
+        p.money -= 150;
+        r.bountyPool = (r.bountyPool || 100) + 150;
+        return "Donated $150 to the victims affected by the flood.";
+      }
+    },
+    {
+      action: (p: Player) => {
+        const initialPos = p.position;
+        room.animationWaypoint = initialPos; // Record Twist tile as waypoint
+        const steps = Math.floor(Math.random() * 3) + 1;
+        const nextPos = initialPos + steps;
+        p.position = nextPos;
+        const currentTile = tileAt(nextPos);
+        return `Found a shortcut! Advance ${steps} tiles to ${currentTile.name}.`;
+      }
+    },
+    {
+      action: (p: Player) => {
+        const initialPos = p.position;
+        room.animationWaypoint = initialPos; // Record Twist tile as waypoint
+        const steps = Math.floor(Math.random() * 5) + 1;
+        const nextPos = initialPos - steps;
+        p.position = nextPos;
+        const currentTile = tileAt(nextPos);
+        return `Took a wrong path! Move back ${steps} tiles to ${currentTile.name}.`;
+      }
+    },
+    {
+      action: (p: Player) => {
+        const initialPos = p.position;
+        room.animationWaypoint = initialPos;
+        const nextPos = 30; // Position for Prison;
+        p.position = nextPos;
+        return "Caught giving corruption! Sentence to Prison!";
+      }
+    },
+    {
+      action: (p: Player) => {
+        const initialPos = p.position;
+        room.animationWaypoint = initialPos;
+        const nextPos = 0; // Position for Start;
+        p.position = nextPos;
+        p.money += 500
+        addLog(room, "Send to START!!");
+        return `${p.nickname} landed on Start and collected $500.`;
+      }
+    },
+    {
+      action: (p: Player, r: Room) => {
+        const initialPos = p.position;
+        room.animationWaypoint = initialPos;
+        const choice = Math.floor(Math.random() * 2) + 1; // choice between spain or UK area
+        let nextPos = 0;
+        if (choice === 1) {
+          nextPos = 10 + (Math.floor(Math.random() * 5) + 1); // surprise visit to spain area
+        }
+        else {
+          nextPos = 30 - (Math.floor(Math.random() * 4) + 1); // surprise visit to UK area
+        }
+        p.position = nextPos;
+        const currentTile = tileAt(nextPos);
+        return `Suprise visit to ${currentTile.name}`;
+      }
+    }
+  ];
+
+  // Pick a random twist event and execute it
+  const event = twistEvents[Math.floor(Math.random() * twistEvents.length)];
+  const message = event.action(player, room);
+  addLog(room, `🌀 [TWIST]: ${message}`);
+}
+
 /** Moves a player forward `steps` tiles: handles passing Start, tax tiles,
  * and auto-charging rent on an owned tile (waived between teammates). */
 function movePlayer(room: Room, player: Player, steps: number): MoveResult {
+  room.animationWaypoint = undefined;
+
   const prev = player.position;
   const next = (prev + steps) % 40;
 
@@ -162,20 +247,26 @@ function movePlayer(room: Room, player: Player, steps: number): MoveResult {
   const tile = tileAt(next);
   addLog(room, `${player.nickname} landed on ${tile.name}.`);
 
-  if (tile.kind === "tax" && tile.taxAmount) {
+  if (tile.kind === "twist") {
+    handleTwist(room, player);
+  }
+
+  const finalTile = tileAt(player.position);
+
+  if (finalTile.kind === "tax" && tile.taxAmount) {
     player.money -= tile.taxAmount;
     room.bountyPool = (room.bountyPool || 0) + tile.taxAmount;
     addLog(room, `${player.nickname} paid $${tile.taxAmount} for ${tile.name}.`);
   }
 
-  if (tile.index === 4) {
+  if (finalTile.index === 4) {
     const taxAmount = Math.floor(player.money * 0.05)
     player.money -= taxAmount;
     room.bountyPool = (room.bountyPool || 0) + taxAmount;
     addLog(room, `${player.nickname} paid a 5% Income Tax of $${taxAmount}`);
   }
 
-  if (tile.index === 20) {
+  if (finalTile.index === 20) {
     const winnings = room.bountyPool;
     player.money += winnings;
     player.onVacation = true;
@@ -183,14 +274,14 @@ function movePlayer(room: Room, player: Player, steps: number): MoveResult {
     room.bountyPool = 100; // reset back to the initial pool
   }
 
-  if (tile.kind === "treasure") {
+  if (finalTile.kind === "treasure") {
     handleTreasure(room, player);
   }
 
   let purchasable = false;
   let creditorId: string | undefined;
-  if (isPurchasable(tile)) {
-    const ownerId = room.ownership[tile.index];
+  if (isPurchasable(finalTile)) {
+    const ownerId = room.ownership[finalTile.index];
     if (!ownerId) {
       purchasable = true;
     } else if (ownerId !== player.id) {
@@ -202,13 +293,13 @@ function movePlayer(room: Room, player: Player, steps: number): MoveResult {
       } else if (sameTeam(room, player.id, ownerId)) {
         addLog(room, `${player.nickname} owes no rent — same team.`);
       } else {
-        const rent = computeRent(room, tile, ownerId, player.id);
+        const rent = computeRent(room, finalTile, ownerId, player.id);
         if (owner && rent > 0) {
           player.money -= rent;
           owner.money += rent;
           creditorId = owner.id;
 
-          if (tile.kind === "utility") {
+          if (finalTile.kind === "utility") {
             addLog(room, `${player.nickname} paid $${rent} utility bill to ${owner.nickname}. $20 for each house and $40 for each hotel, ${player.nickname} owned!`);
           }
           else {
@@ -219,9 +310,9 @@ function movePlayer(room: Room, player: Player, steps: number): MoveResult {
     }
   }
 
-  const goToJail = tile.kind === "jail" || player.position === JAIL_POSITION;
-  const isWagerTile = tile.kind === "wager";
-  const isVacationTile = tile.index === 20;
+  const goToJail = finalTile.kind === "jail" || player.position === JAIL_POSITION;
+  const isWagerTile = finalTile.kind === "wager";
+  const isVacationTile = finalTile.index === 20;
 
   return { goToJail, isWagerTile, isVacationTile, purchasable, creditorId };
 }
@@ -325,7 +416,7 @@ export function initializeGame(room: Room) {
     p.bankrupt = false;
     p.prisonCount = 0;
     p.onVacation = false;
-    p.freePassCount = 0; 
+    p.freePassCount = 0;
   });
 
   const first = room.players.find((p) => p.id === order[0]);
@@ -397,15 +488,15 @@ export function playWager(room: Room, playerId: string, betAmount: number) {
   // trigger the dice animation after entering bet
   room.lastRoll = { die1, die2, isDoubles }
 
-  if (sum >= 7) {
+  if (sum >= 8) {
     // Win: Double wager back (profit = betAmount)
     player.money += betAmount;
-    addLog(room, `[WAGER WIN] ${player.nickname} rolled ${die1}+${die2}=${sum} (7-12) and won $${betAmount * 2}!`);
+    addLog(room, `[WAGER WIN] ${player.nickname} rolled ${die1}+${die2}=${sum} (8-12) and won $${betAmount * 2}!`);
   } else {
     // Lose: Deduct bet
     player.money -= betAmount;
     room.bountyPool = (room.bountyPool || 0) + betAmount;
-    addLog(room, `[WAGER LOSS] ${player.nickname} rolled ${die1}+${die2}=${sum} (1-6) and lost $${betAmount}.`);
+    addLog(room, `[WAGER LOSS] ${player.nickname} rolled ${die1}+${die2}=${sum} (1-7) and lost $${betAmount}.`);
   }
 
   // Resume normal post-landing flow
@@ -443,7 +534,7 @@ export function payBailAndRoll(room: Room) {
 
 export function useFreePassAndRoll(room: Room) {
   const player = currentPlayer(room);
-  
+
   player.freePassCount -= 1;
   player.inJail = false;
   player.jailTurns = 0;

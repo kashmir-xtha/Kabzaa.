@@ -103,6 +103,7 @@ export interface Room {
   winnerId: string | null;
   winnerTeamId: TeamId | null;
   turnDeadline: number | null;
+  animationWaypoint?: number;
 }
 
 export type Ack<T> = { ok: true; data: T } | { ok: false; error: string };
