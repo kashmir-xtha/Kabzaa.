@@ -506,6 +506,7 @@ export class RoomManager {
       doublesCount: 0,
       bankrupt: false,
       onVacation: false,
+      freePassCount: 0
     };
   }
 

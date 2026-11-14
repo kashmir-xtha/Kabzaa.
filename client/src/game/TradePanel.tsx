@@ -32,7 +32,7 @@ function SideSummary({ side }: { side: { money: number; tiles: number[] } }) {
 function TradeCard({
   trade,
   players,
-  mode,
+  currentUserId,
   onAccept,
   onDecline,
   onCounter,
@@ -40,7 +40,7 @@ function TradeCard({
 }: {
   trade: TradeOffer;
   players: Player[];
-  mode: "incoming" | "outgoing";
+  currentUserId: string;
   onAccept?: () => void;
   onDecline?: () => void;
   onCounter?: () => void;
@@ -49,15 +49,22 @@ function TradeCard({
   const from = players.find((p) => p.id === trade.fromId);
   const to = players.find((p) => p.id === trade.toId);
 
+  const isIncoming = trade.toId === currentUserId;
+  const isOutgoing = trade.fromId === currentUserId;
+
   return (
-    <div className={`notch-sm border px-3 py-2.5 flex flex-col gap-2 transition-all ${
-      mode === "incoming" ? "border-teal/40 bg-teal/5" : "border-ink-border bg-ink/40"
+    <div className={`border px-3 py-2.5 flex flex-col gap-2 transition-all ${
+      isIncoming ? "border-teal/40 bg-teal/5" : isOutgoing ? "border-ink-border bg-ink/40" : "border-ink-border/50 bg-ink/20 opacity-90"
     }`}>
       <div className="flex items-center justify-between">
         <span className={`text-[10px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded ${
-          mode === "incoming" ? "bg-teal/20 text-teal" : "bg-slate/20 text-slate"
+          isIncoming ? "bg-teal/20 text-teal" : isOutgoing ? "bg-slate/20 text-slate" : "bg-amber/20 text-amber"
         }`}>
-          {mode === "incoming" ? `Incoming from ${from?.nickname ?? "Someone"}` : `Outgoing to ${to?.nickname ?? "Someone"}`}
+          {isIncoming 
+            ? `Incoming from ${from?.nickname ?? "Someone"}` 
+            : isOutgoing 
+            ? `Outgoing to ${to?.nickname ?? "Someone"}` 
+            : `${from?.nickname ?? "Someone"} ➔ ${to?.nickname ?? "Someone"}`}
         </span>
       </div>
 
@@ -69,37 +76,39 @@ function TradeCard({
         <SideSummary side={trade.request} />
       </div>
 
-      <div className="flex gap-2 mt-1 pt-1 border-t border-ink-border/40">
-        {mode === "incoming" ? (
-          <>
+      {(isIncoming || isOutgoing) && (
+        <div className="flex gap-2 mt-1 pt-1 border-t border-ink-border/40">
+          {isIncoming ? (
+            <>
+              <button
+                onClick={onDecline}
+                className="flex-1 border border-ink-border py-1 text-xs text-slate hover:border-signal hover:text-signal transition-colors cursor-pointer"
+              >
+                Decline
+              </button>
+              <button
+                onClick={onCounter}
+                className="flex-1 border border-amber text-amber py-1 text-xs font-semibold hover:bg-amber/10 transition-colors cursor-pointer"
+              >
+                Counter
+              </button>
+              <button
+                onClick={onAccept}
+                className="flex-1 bg-teal text-ink py-1 text-xs font-bold hover:opacity-90 transition-opacity cursor-pointer shadow-sm"
+              >
+                Accept
+              </button>
+            </>
+          ) : (
             <button
-              onClick={onDecline}
-              className="flex-1 notch-sm border border-ink-border py-1 text-xs text-slate hover:border-signal hover:text-signal transition-colors cursor-pointer"
+              onClick={onCancel}
+              className="w-full border border-ink-border py-1 text-xs text-slate hover:border-signal hover:text-signal transition-colors cursor-pointer"
             >
-              Decline
+              Cancel offer
             </button>
-            <button
-              onClick={onCounter}
-              className="flex-1 notch-sm border border-amber text-amber py-1 text-xs font-semibold hover:bg-amber/10 transition-colors cursor-pointer"
-            >
-              Counter
-            </button>
-            <button
-              onClick={onAccept}
-              className="flex-1 notch-sm bg-teal text-ink py-1 text-xs font-bold hover:opacity-90 transition-opacity cursor-pointer shadow-sm"
-            >
-              Accept
-            </button>
-          </>
-        ) : (
-          <button
-            onClick={onCancel}
-            className="w-full notch-sm border border-ink-border py-1 text-xs text-slate hover:border-signal hover:text-signal transition-colors cursor-pointer"
-          >
-            Cancel offer
-          </button>
-        )}
-      </div>
+          )}
+        </div>
+      )}
     </div>
   );
 }
@@ -114,10 +123,10 @@ function TradeComposer({
   room: Room;
   me: Player;
   players: Player[];
-  initialData?: { counterpartId: string; offerMoney: number; offerTiles: number[]; requestMoney: number; requestTiles: number[] };
+  initialData?: { tradeId?: string; counterpartId: string; offerMoney: number; offerTiles: number[]; requestMoney: number; requestTiles: number[] };
   onClose: () => void;
 }) {
-  const { proposeTrade } = useRoom();
+  const { proposeTrade, respondToTrade } = useRoom();
   const others = players.filter((p) => p.id !== me.id);
   
   const [counterpartId, setCounterpartId] = useState<string | null>(initialData?.counterpartId ?? others[0]?.id ?? null);
@@ -155,7 +164,17 @@ function TradeComposer({
   async function handleSend() {
     if (!counterpartId || sending) return;
     setSending(true);
-    const ok = await proposeTrade(counterpartId, { money: offerMoney, tiles: offerTiles }, { money: requestMoney, tiles: requestTiles });
+    
+    if (initialData?.tradeId) {
+      await respondToTrade(initialData.tradeId, false);
+    }
+
+    const ok = await proposeTrade(
+      counterpartId, 
+      { money: offerMoney, tiles: offerTiles }, 
+      { money: requestMoney, tiles: requestTiles }
+    );
+    
     setSending(false);
     if (ok) onClose();
   }
@@ -168,11 +187,13 @@ function TradeComposer({
       onClick={onClose}
     >
       <div 
-        className="notch border border-amber bg-ink-raised-2 p-5 w-full max-w-xl shadow-2xl flex flex-col gap-4 animate-fade-in overflow-x-hidden cursor-default"
+        className="border border-amber bg-ink-raised-2 p-5 w-full max-w-xl shadow-2xl flex flex-col gap-4 animate-fade-in overflow-x-hidden cursor-default"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center justify-between border-b border-ink-border pb-2">
-          <p className="text-xs font-bold text-amber uppercase tracking-wider">Propose Trade Agreement</p>
+          <p className="text-xs font-bold text-amber uppercase tracking-wider">
+            {initialData?.tradeId ? "Counter Trade Agreement" : "Propose Trade Agreement"}
+          </p>
           <button onClick={onClose} className="text-xs text-slate hover:text-parchment cursor-pointer">✕</button>
         </div>
 
@@ -186,7 +207,7 @@ function TradeComposer({
                   setCounterpartId(p.id);
                   setRequestTiles([]);
                 }}
-                className={`flex items-center gap-1.5 px-2.5 py-1.5 notch-sm border text-xs cursor-pointer transition-colors ${
+                className={`flex items-center gap-1.5 px-2.5 py-1.5 border text-xs cursor-pointer transition-colors ${
                   counterpartId === p.id ? "border-amber bg-amber/10 text-parchment font-medium" : "border-ink-border bg-ink/40 text-slate hover:border-slate"
                 }`}
               >
@@ -328,15 +349,15 @@ function TradeComposer({
         )}
 
         <div className="flex gap-2 pt-2 border-t border-ink-border">
-          <button onClick={onClose} className="flex-1 notch-sm border border-ink-border py-1.5 text-xs text-slate hover:text-parchment cursor-pointer transition-colors">
+          <button onClick={onClose} className="flex-1 border border-ink-border py-1.5 text-xs text-slate hover:text-parchment cursor-pointer transition-colors">
             Cancel
           </button>
           <button
             onClick={handleSend}
             disabled={!counterpartId || sending}
-            className="flex-1 notch-sm bg-amber text-ink py-1.5 text-xs font-bold disabled:opacity-40 hover:opacity-90 transition-opacity cursor-pointer shadow-md"
+            className="flex-1 bg-amber text-ink py-1.5 text-xs font-bold disabled:opacity-40 hover:opacity-90 transition-opacity cursor-pointer shadow-md"
           >
-            {sending ? "Dispatching…" : "Dispatch Offer"}
+            {sending ? "Dispatching…" : initialData?.tradeId ? "Send Counter Offer" : "Dispatch Offer"}
           </button>
         </div>
       </div>
@@ -347,11 +368,11 @@ function TradeComposer({
 export default function TradePanel({ room, me }: { room: Room; me: Player }) {
   const { respondToTrade, cancelTrade } = useRoom();
   const [composerOpen, setComposerOpen] = useState(false);
-  const [counterData, setCounterData] = useState<{ counterpartId: string; offerMoney: number; offerTiles: number[]; requestMoney: number; requestTiles: number[] } | undefined>(undefined);
+  const [counterData, setCounterData] = useState<{ tradeId?: string; counterpartId: string; offerMoney: number; offerTiles: number[]; requestMoney: number; requestTiles: number[] } | undefined>(undefined);
 
-  const incoming = room.trades.filter((t) => t.toId === me.id);
-  const outgoing = room.trades.filter((t) => t.fromId === me.id);
-  const totalActiveCount = incoming.length + outgoing.length;
+  // Display ALL room trades so everyone can see ongoing negotiations
+  const allTrades = room.trades;
+  const totalActiveCount = allTrades.length;
 
   function handleOpenNew() {
     setCounterData(undefined);
@@ -359,8 +380,8 @@ export default function TradePanel({ room, me }: { room: Room; me: Player }) {
   }
 
   function handleCounter(t: TradeOffer) {
-    // Reverse offer vs request for counter-proposal
     setCounterData({
+      tradeId: t.id,
       counterpartId: t.fromId,
       offerMoney: t.request.money,
       offerTiles: [...t.request.tiles],
@@ -372,7 +393,7 @@ export default function TradePanel({ room, me }: { room: Room; me: Player }) {
 
   return (
     <>
-      <div className="notch border border-ink-border bg-ink-raised p-3 flex flex-col">
+      <div className="border border-ink-border bg-ink-raised p-3 flex flex-col">
         <div className="flex items-center justify-between mb-2.5">
           <div className="flex items-center gap-2">
             <p className="text-xs font-semibold text-slate uppercase tracking-wider">Active Trades</p>
@@ -391,20 +412,17 @@ export default function TradePanel({ room, me }: { room: Room; me: Player }) {
         </div>
 
         <div className="flex flex-col gap-2 max-h-48 overflow-y-auto pr-1">
-          {incoming.map((t) => (
+          {allTrades.map((t) => (
             <TradeCard
               key={t.id}
               trade={t}
               players={room.players}
-              mode="incoming"
+              currentUserId={me.id}
               onAccept={() => respondToTrade(t.id, true)}
               onDecline={() => respondToTrade(t.id, false)}
               onCounter={() => handleCounter(t)}
+              onCancel={() => cancelTrade(t.id)}
             />
-          ))}
-
-          {outgoing.map((t) => (
-            <TradeCard key={t.id} trade={t} players={room.players} mode="outgoing" onCancel={() => cancelTrade(t.id)} />
           ))}
 
           {totalActiveCount === 0 && (
