@@ -98,9 +98,9 @@ export default function Game() {
       const runStage2 = () => {
         let pos = waypoint;
         const diff = (newPlayer.position - waypoint + totalTiles) % totalTiles;
-        const isBackward = diff > 20; 
+        const isBackward = diff > 20;
         const stepsToTarget = isBackward ? (waypoint - newPlayer.position + totalTiles) % totalTiles : diff;
-        
+
         const effectiveSteps = (waypoint === newPlayer.position) ? 0 : stepsToTarget;
         const stage2IntervalMs = Math.max(20, Math.floor(300 / (effectiveSteps || 1)));
 
@@ -222,11 +222,12 @@ export default function Game() {
       {gameOver && <GameOverBanner room={currentDisplayedRoom} />}
 
       <div className="grid grid-cols-1 lg:grid-cols-[280px_1fr_320px] xl:grid-cols-[300px_1fr_340px] h-full w-full gap-3 md:gap-4 min-h-0 overflow-hidden">
-        {/* COLUMN 1 (LEFT): Brand + Chat */}
+        {/* COLUMN 1 (LEFT): Brand + Player HUD + Chat */}
         <aside className="h-full min-h-0 flex flex-col gap-3 overflow-hidden">
-          <div className="notch border border-ink-border bg-ink-raised p-3 shrink-0 flex items-center justify-between">
+          <div className="border border-ink-border bg-ink-raised p-3 shrink-0 flex items-center justify-between">
             <Wordmark size="sm" />
           </div>
+          <PlayerHud room={currentDisplayedRoom} playerId={playerId} currentTurnId={currentTurnId} />
           <div className="flex-1 min-h-0 flex flex-col">
             <Chat messages={currentDisplayedRoom.chatMessages} myPlayerId={displayedMe.id} />
           </div>
@@ -260,7 +261,7 @@ export default function Game() {
           </Board>
         </main>
 
-        {/* COLUMN 3 (RIGHT): Room info, Players, Trades, Properties */}
+        {/* COLUMN 3 (RIGHT): Room info, Trades (40%), Properties (60%) */}
         <aside className="h-full min-h-0 flex flex-col gap-3 pr-1 overflow-hidden">
           <div className="border border-ink-border bg-ink-raised p-3 shrink-0 flex items-center justify-between">
             <span className="text-xs font-mono text-slate bg-ink/60 px-2 py-1 rounded border border-ink-border">
@@ -288,16 +289,19 @@ export default function Game() {
             )}
           </div>
 
-          <PlayerHud room={currentDisplayedRoom} playerId={playerId} currentTurnId={currentTurnId} />
-          <TradePanel room={currentDisplayedRoom} me={displayedMe} />
-          <PropertiesPanel
-            room={currentDisplayedRoom}
-            me={displayedMe}
-            onBuild={buildHouse}
-            onSell={sellHouse}
-            onMortgage={mortgageProperty}
-            onUnmortgage={unmortgageProperty}
-          />
+          <div className="h-[40%] min-h-0 flex flex-col overflow-hidden">
+            <TradePanel room={currentDisplayedRoom} me={displayedMe} />
+          </div>
+          <div className="h-[60%] min-h-0 flex flex-col overflow-hidden">
+            <PropertiesPanel
+              room={currentDisplayedRoom}
+              me={displayedMe}
+              onBuild={buildHouse}
+              onSell={sellHouse}
+              onMortgage={mortgageProperty}
+              onUnmortgage={unmortgageProperty}
+            />
+          </div>
         </aside>
       </div>
     </div>
@@ -326,14 +330,14 @@ function GameOverBanner({ room }: { room: Room }) {
 
   return (
     <div className="fixed inset-0 z-50 bg-ink/80 backdrop-blur-sm flex items-center justify-center p-4">
-      <div className="notch border border-amber bg-ink-raised-2 p-6 w-full max-w-md shadow-2xl animate-fade-in">
+      <div className="border border-amber bg-ink-raised-2 p-6 w-full max-w-md shadow-2xl animate-fade-in">
         <div className="text-center mb-5">
           <p className="text-xs text-amber font-semibold uppercase tracking-widest mb-1">Game over</p>
           <p className="font-display text-3xl text-parchment">{winnerName} wins!</p>
         </div>
         <div className="flex flex-col gap-2 max-h-[60vh] overflow-y-auto pr-1">
           {standings.map((p, i) => (
-            <div key={p.id} className="notch-sm bg-ink/60 border border-ink-border px-3 py-2 flex items-center gap-3 text-sm">
+            <div key={p.id} className="bg-ink/60 border border-ink-border px-3 py-2 flex items-center gap-3 text-sm">
               <span className="text-slate font-mono text-xs w-4 text-right">{i + 1}</span>
               <AvatarBadge id={p.avatar} size={28} />
               <span className={`flex-1 truncate ${p.bankrupt ? "text-slate line-through" : "text-parchment font-medium"}`}>
@@ -510,7 +514,7 @@ function CenterPanel({
             )}
 
             {room.turnPhase === "awaiting-wager" && (
-              <div className="border border-amber bg-ink-raised-2 p-2 flex flex-col gap-2 rounded notch-sm">
+              <div className="border border-amber bg-ink-raised-2 p-2 flex flex-col gap-2 rounded">
                 <div className="text-center">
                   <p className="text-xs font-bold text-amber uppercase tracking-wider">High Stakes Wager</p>
                   <p className="text-[11px] text-parchment leading-tight mt-0.5">
@@ -652,7 +656,7 @@ function PlayerHud({ room, playerId, currentTurnId }: { room: Room; playerId: st
   const ownedCount = (pid: string) => Object.values(room.ownership).filter((id) => id === pid).length;
 
   return (
-    <div className="notch border border-ink-border bg-ink-raised p-3 shrink-0">
+    <div className="border border-ink-border bg-ink-raised p-3 shrink-0">
       <p className="text-xs font-semibold text-slate uppercase tracking-wider mb-2">Players</p>
       <div className="flex flex-col gap-1.5">
         {room.players.map((p) => {
@@ -660,7 +664,7 @@ function PlayerHud({ room, playerId, currentTurnId }: { room: Room; playerId: st
           return (
             <div
               key={p.id}
-              className={`notch-sm flex items-center gap-2.5 px-2.5 py-1.5 border transition-colors ${p.id === currentTurnId ? "border-amber bg-ink-raised-2" : "border-ink-border/50 bg-ink/40"
+              className={`flex items-center gap-2.5 px-2.5 py-1.5 border transition-colors ${p.id === currentTurnId ? "border-amber bg-ink-raised-2" : "border-ink-border/50 bg-ink/40"
                 } ${p.bankrupt ? "opacity-40" : ""}`}
             >
               <AvatarBadge id={p.avatar} size={30} />
@@ -727,82 +731,86 @@ function PropertiesPanel({
   onUnmortgage: (tileIndex: number) => void;
 }) {
   const owned = BOARD.filter((t) => room.ownership[t.index] === me.id);
-  if (owned.length === 0) return null;
-
   const properties = owned.filter((t): t is BoardTile & { group: string } => t.kind === "property" && Boolean(t.group));
 
   return (
-    <div className="notch border border-ink-border bg-ink-raised p-3 flex-1 min-h-0 flex flex-col">
+    <div className="border border-ink-border bg-ink-raised p-3 flex-1 min-h-0 flex flex-col">
       <p className="text-xs font-semibold text-slate uppercase tracking-wider mb-2 shrink-0">My properties</p>
-      <div className="flex flex-col gap-2 flex-1 min-h-0 overflow-y-auto pr-1">
-        {owned.map((tile) => {
-          const isProperty = tile.kind === "property";
-          const houses = room.houses[tile.index] ?? 0;
-          const mortgaged = Boolean(room.mortgaged[tile.index]);
-          const buildCheck = isProperty ? checkCanBuildHouse(room, tile, me) : null;
-          const sellCheck = isProperty ? checkCanSellHouse(room, tile, me) : null;
-          const mortgageCheck = checkCanMortgage(room, tile, me);
-          const unmortgageCheck = checkCanUnmortgage(room, tile, me);
 
-          return (
-            <div key={tile.index} className={`notch-sm border px-2.5 py-1.5 bg-ink/30 ${mortgaged ? "border-signal/50" : "border-ink-border"}`}>
-              <div className="flex items-center justify-between gap-2">
-                <div className="flex items-center gap-1.5 min-w-0">
-                  <span className="text-xs text-parchment font-medium truncate">{tile.name}</span>
+      {owned.length === 0 ? (
+        <p className="text-xs text-slate italic py-4 text-center my-auto">No properties held.</p>
+      ) : (
+        <div className="flex flex-col gap-2 flex-1 min-h-0 overflow-y-auto pr-1">
+          {owned.map((tile) => {
+            const isProperty = tile.kind === "property";
+            const houses = room.houses[tile.index] ?? 0;
+            const mortgaged = Boolean(room.mortgaged[tile.index]);
+            const buildCheck = isProperty ? checkCanBuildHouse(room, tile, me) : null;
+            const sellCheck = isProperty ? checkCanSellHouse(room, tile, me) : null;
+            const mortgageCheck = checkCanMortgage(room, tile, me);
+            const unmortgageCheck = checkCanUnmortgage(room, tile, me);
+
+            return (
+              <div key={tile.index} className={`border px-2.5 py-1.5 bg-ink/30 ${mortgaged ? "border-signal/50" : "border-ink-border"}`}>
+                <div className="flex items-center justify-between gap-2">
+                  <div className="flex items-center gap-1.5 min-w-0">
+                    <span className="text-xs text-parchment font-medium truncate">{tile.name}</span>
+                  </div>
+                  {mortgaged ? (
+                    <span className="text-[10px] text-signal font-semibold shrink-0">Mortgaged</span>
+                  ) : (
+                    houses > 0 && <span className="text-[10px] text-amber font-mono shrink-0">{houses >= 5 ? "Hotel" : `${houses}🏠`}</span>
+                  )}
                 </div>
-                {mortgaged ? (
-                  <span className="text-[10px] text-signal font-semibold shrink-0">Mortgaged</span>
-                ) : (
-                  houses > 0 && <span className="text-[10px] text-amber font-mono shrink-0">{houses >= 5 ? "Hotel" : `${houses}🏠`}</span>
-                )}
-              </div>
 
-              {isProperty && !mortgaged && (
-                <div className="flex items-center gap-1.5 mt-1.5">
-                  <button
-                    onClick={() => onSell(tile.index)}
-                    disabled={!sellCheck?.ok}
-                    title={sellCheck?.reason}
-                    className="flex-1 notch-sm border border-ink-border py-0.5 text-[10px] text-parchment disabled:opacity-30 hover:border-signal transition-colors"
-                  >
-                    Sell {sellCheck?.cost !== undefined ? `+$${sellCheck.cost}` : ""}
-                  </button>
-                  <button
-                    onClick={() => onBuild(tile.index)}
-                    disabled={!buildCheck?.ok}
-                    title={buildCheck?.reason}
-                    className="flex-1 notch-sm bg-amber text-ink py-0.5 text-[10px] font-bold disabled:opacity-30 hover:opacity-90 transition-opacity"
-                  >
-                    Build ${groupHouseCost(tile.group)}
-                  </button>
+                {isProperty && !mortgaged && (
+                  <div className="flex items-center gap-1.5 mt-1.5">
+                    <button
+                      onClick={() => onSell(tile.index)}
+                      disabled={!sellCheck?.ok}
+                      title={sellCheck?.reason}
+                      className="flex-1 border border-ink-border py-0.5 text-[10px] text-parchment disabled:opacity-30 hover:border-signal transition-colors"
+                    >
+                      Sell {sellCheck?.cost !== undefined ? `+$${sellCheck.cost}` : ""}
+                    </button>
+                    <button
+                      onClick={() => onBuild(tile.index)}
+                      disabled={!buildCheck?.ok}
+                      title={buildCheck?.reason}
+                      className="flex-1 bg-amber text-ink py-0.5 text-[10px] font-bold disabled:opacity-30 hover:opacity-90 transition-opacity"
+                    >
+                      Build ${groupHouseCost(tile.group)}
+                    </button>
+                  </div>
+                )}
+
+                <div className="flex items-center gap-1.5 mt-1">
+                  {mortgaged ? (
+                    <button
+                      onClick={() => onUnmortgage(tile.index)}
+                      disabled={!unmortgageCheck.ok}
+                      title={unmortgageCheck.reason}
+                      className="flex-1 border border-teal text-teal py-0.5 text-[10px] font-semibold disabled:opacity-30 hover:bg-teal/10 transition-colors"
+                    >
+                      Unmortgage ${unmortgageCheck.amount ?? ""}
+                    </button>
+                  ) : (
+                    <button
+                      onClick={() => onMortgage(tile.index)}
+                      disabled={!mortgageCheck.ok}
+                      title={mortgageCheck.reason}
+                      className="flex-1 border border-ink-border py-0.5 text-[10px] text-slate disabled:opacity-30 hover:border-amber hover:text-amber transition-colors"
+                    >
+                      Mortgage +${mortgageCheck.amount ?? ""}
+                    </button>
+                  )}
                 </div>
-              )}
-
-              <div className="flex items-center gap-1.5 mt-1">
-                {mortgaged ? (
-                  <button
-                    onClick={() => onUnmortgage(tile.index)}
-                    disabled={!unmortgageCheck.ok}
-                    title={unmortgageCheck.reason}
-                    className="flex-1 notch-sm border border-teal text-teal py-0.5 text-[10px] font-semibold disabled:opacity-30 hover:bg-teal/10 transition-colors"
-                  >
-                    Unmortgage ${unmortgageCheck.amount ?? ""}
-                  </button>
-                ) : (
-                  <button
-                    onClick={() => onMortgage(tile.index)}
-                    disabled={!mortgageCheck.ok}
-                    title={mortgageCheck.reason}
-                    className="flex-1 notch-sm border border-ink-border py-0.5 text-[10px] text-slate disabled:opacity-30 hover:border-amber hover:text-amber transition-colors"
-                  >
-                    Mortgage +${mortgageCheck.amount ?? ""}
-                  </button>
-                )}
               </div>
-            </div>
-          );
-        })}
-      </div>
+            );
+          })}
+        </div>
+      )}
+
       {properties.length > 0 && !properties.some((t) => ownsWholeGroup(room, t, me.id)) && (
         <p className="text-[10px] text-slate mt-1.5 italic shrink-0">Own all tiles in a group to build houses.</p>
       )}

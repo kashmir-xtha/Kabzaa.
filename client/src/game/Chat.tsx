@@ -21,7 +21,7 @@ export default function Chat({ messages, myPlayerId }: { messages: ChatMessage[]
   }
 
   return (
-    <div className="notch border border-ink-border bg-ink-raised p-4 flex flex-col h-full min-h-0">
+    <div className="border border-ink-border bg-ink-raised p-4 flex flex-col h-full min-h-0">
       <p className="text-sm font-medium text-slate mb-3">Chat</p>
       <div ref={listRef} className="flex-1 min-h-0 overflow-y-auto flex flex-col gap-2 pr-1 mb-3">
         {messages.length === 0 && <p className="text-xs text-slate">Say hello.</p>}
@@ -40,12 +40,12 @@ export default function Chat({ messages, myPlayerId }: { messages: ChatMessage[]
           value={text}
           onChange={(e) => setText(e.target.value.slice(0, 300))}
           placeholder="Say something…"
-          className="flex-1 min-w-0 bg-ink border border-ink-border notch-sm px-3 py-1.5 text-sm text-parchment placeholder:text-slate/70 outline-none focus:border-amber transition-colors"
+          className="flex-1 min-w-0 bg-ink border border-ink-border px-3 py-1.5 text-sm text-parchment placeholder:text-slate/70 outline-none focus:border-amber transition-colors"
         />
         <button
           type="submit"
           disabled={!text.trim()}
-          className="notch-sm bg-amber text-ink px-3 py-1.5 text-sm font-medium disabled:opacity-40 disabled:cursor-not-allowed hover:opacity-90 transition-opacity"
+          className="bg-amber text-ink px-3 py-1.5 text-sm font-medium disabled:opacity-40 disabled:cursor-not-allowed hover:opacity-90 transition-opacity"
         >
           Send
         </button>

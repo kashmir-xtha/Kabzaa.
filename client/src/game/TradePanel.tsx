@@ -407,8 +407,8 @@ export default function TradePanel({ room, me }: { room: Room; me: Player }) {
 
   return (
     <>
-      <div className="border border-ink-border bg-ink-raised p-3 flex flex-col">
-        <div className="flex items-center justify-between mb-2.5">
+      <div className="border border-ink-border bg-ink-raised p-3 h-full flex flex-col min-h-0">
+        <div className="flex items-center justify-between mb-2.5 shrink-0">
           <div className="flex items-center gap-2">
             <p className="text-xs font-semibold text-slate uppercase tracking-wider">Active Trades</p>
             {totalActiveCount > 0 && (
@@ -425,7 +425,7 @@ export default function TradePanel({ room, me }: { room: Room; me: Player }) {
           </button>
         </div>
 
-        <div className="flex flex-col gap-2 max-h-48 overflow-y-auto pr-1">
+        <div className="flex flex-col gap-2 flex-1 min-h-0 overflow-y-auto pr-1">
           {allTrades.map((t) => (
             <TradeCard
               key={t.id}
@@ -440,7 +440,7 @@ export default function TradePanel({ room, me }: { room: Room; me: Player }) {
           ))}
 
           {totalActiveCount === 0 && (
-            <p className="text-xs text-slate italic py-2 text-center">No active trades currently open.</p>
+            <p className="text-xs text-slate italic py-4 text-center my-auto">No active trades currently open.</p>
           )}
         </div>
       </div>

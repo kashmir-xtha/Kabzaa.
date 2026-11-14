@@ -134,9 +134,8 @@ export function AvatarBadge({
   const color = avatarColor(id);
   return (
     <div
-      className={`notch-sm flex items-center justify-center shrink-0 transition-transform border-2 ${
-        selected ? "border-amber scale-105" : "border-transparent"
-      }`}
+      className={`rounded-full flex items-center justify-center shrink-0 transition-transform border-2 border-white ${selected ? "border-amber scale-105" : "border-transparent"
+        }`}
       style={{
         width: size,
         height: size,
