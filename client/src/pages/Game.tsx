@@ -79,7 +79,7 @@ export default function Game() {
     const oldPlayer = displayedRoom?.players.find((p) => p.id === turnPlayerId);
     const newPlayer = targetRoom.players.find((p) => p.id === turnPlayerId);
 
-    if (!oldPlayer || !newPlayer || oldPlayer.position === newPlayer.position) {
+    if (!oldPlayer || !newPlayer) {
       animationStateRef.current = "idle";
       setDisplayedRoom(targetRoom);
       return;
@@ -89,7 +89,7 @@ export default function Game() {
     const totalTiles = BOARD.length;
 
     // --- TWO-STAGE ANIMATION FOR TWIST WAYPOINTS ---
-    if (waypoint !== undefined && waypoint !== oldPlayer.position && waypoint !== newPlayer.position) {
+    if (waypoint !== undefined && waypoint !== oldPlayer.position) {
       animationStateRef.current = "walking";
       let currentPos = oldPlayer.position;
       const stepsToWaypoint = (waypoint - currentPos + totalTiles) % totalTiles;
@@ -98,9 +98,18 @@ export default function Game() {
       const runStage2 = () => {
         let pos = waypoint;
         const diff = (newPlayer.position - waypoint + totalTiles) % totalTiles;
-        const isBackward = diff > 20; // Checks if moving backward (e.g. 37 steps = -3)
+        const isBackward = diff > 20; 
         const stepsToTarget = isBackward ? (waypoint - newPlayer.position + totalTiles) % totalTiles : diff;
-        const stage2IntervalMs = Math.max(20, Math.floor(300 / (stepsToTarget || 1)));
+        
+        const effectiveSteps = (waypoint === newPlayer.position) ? 0 : stepsToTarget;
+        const stage2IntervalMs = Math.max(20, Math.floor(300 / (effectiveSteps || 1)));
+
+        if (effectiveSteps === 0) {
+          // If start and final destination are both the Twist tile itself
+          animationStateRef.current = "idle";
+          if (pendingRoomRef.current) setDisplayedRoom(pendingRoomRef.current);
+          return;
+        }
 
         const step2Interval = setInterval(() => {
           if (pos === newPlayer.position || animationStateRef.current !== "walking") {
@@ -134,8 +143,7 @@ export default function Game() {
         if (currentPos === waypoint || animationStateRef.current !== "walking") {
           clearInterval(step1Interval);
           if (currentPos === waypoint) {
-            // Pause briefly on the Twist tile before starting secondary movement
-            setTimeout(runStage2, 50);
+            setTimeout(runStage2, 50); // Pause
           } else {
             animationStateRef.current = "idle";
             if (pendingRoomRef.current) {
@@ -161,7 +169,13 @@ export default function Game() {
       return;
     }
 
-    // --- STANDARD SINGLE-STAGE WALK ---
+    // --- STANDARD SINGLE-STAGE WALK (Only skipped if start === end AND no waypoint) ---
+    if (oldPlayer.position === newPlayer.position) {
+      animationStateRef.current = "idle";
+      setDisplayedRoom(targetRoom);
+      return;
+    }
+
     animationStateRef.current = "walking";
     let currentPos = oldPlayer.position;
     const targetPos = newPlayer.position;

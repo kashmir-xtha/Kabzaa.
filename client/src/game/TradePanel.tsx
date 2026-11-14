@@ -20,13 +20,13 @@ function getTileFlag(tileName: string): string | undefined {
   return undefined;
 }
 
-function SideSummary({ side }: { side: { money: number; tiles: number[] } }) {
+function ColoredSideSummary({ side, colorClass }: { side: { money: number; tiles: number[] }; colorClass?: string }) {
   const names = side.tiles.map((i) => BOARD[i]?.name).filter(Boolean);
   const parts: string[] = [];
   if (side.money > 0) parts.push(`$${side.money.toLocaleString()}`);
   parts.push(...names);
   if (parts.length === 0) return <span className="text-slate italic">Nothing</span>;
-  return <span className="text-parchment font-medium">{parts.join(", ")}</span>;
+  return <span className={colorClass ?? "text-parchment font-medium"}>{parts.join(", ")}</span>;
 }
 
 function TradeCard({
@@ -52,6 +52,21 @@ function TradeCard({
   const isIncoming = trade.toId === currentUserId;
   const isOutgoing = trade.fromId === currentUserId;
 
+  // Color mapping based on user perspective:
+  // Outgoing: Offer = Red (giving away), Request = Green (getting)
+  // Incoming: Offer = Green (getting from them), Request = Red (giving to them)
+  // Spectator: Default parchment
+  let offerColor = "text-parchment font-medium";
+  let requestColor = "text-parchment font-medium";
+
+  if (isOutgoing) {
+    offerColor = "text-signal font-medium"; // Red (leaving inventory)
+    requestColor = "text-teal font-medium";   // Green (what we get)
+  } else if (isIncoming) {
+    offerColor = "text-teal font-medium";   // Green (what we get)
+    requestColor = "text-signal font-medium"; // Red (what we give)
+  }
+
   return (
     <div className={`border px-3 py-2.5 flex flex-col gap-2 transition-all ${
       isIncoming ? "border-teal/40 bg-teal/5" : isOutgoing ? "border-ink-border bg-ink/40" : "border-ink-border/50 bg-ink/20 opacity-90"
@@ -69,11 +84,11 @@ function TradeCard({
       </div>
 
       <div className="grid grid-cols-[auto_1fr] gap-x-2 gap-y-1 text-xs">
-        <span className="text-slate font-mono">Offer:</span>
-        <SideSummary side={trade.offer} />
+        <span className="text-slate font-mono">Offered:</span>
+        <ColoredSideSummary side={trade.offer} colorClass={offerColor} />
         
-        <span className="text-slate font-mono">Wants:</span>
-        <SideSummary side={trade.request} />
+        <span className="text-slate font-mono">For:</span>
+        <ColoredSideSummary side={trade.request} colorClass={requestColor} />
       </div>
 
       {(isIncoming || isOutgoing) && (
@@ -370,7 +385,6 @@ export default function TradePanel({ room, me }: { room: Room; me: Player }) {
   const [composerOpen, setComposerOpen] = useState(false);
   const [counterData, setCounterData] = useState<{ tradeId?: string; counterpartId: string; offerMoney: number; offerTiles: number[]; requestMoney: number; requestTiles: number[] } | undefined>(undefined);
 
-  // Display ALL room trades so everyone can see ongoing negotiations
   const allTrades = room.trades;
   const totalActiveCount = allTrades.length;
 

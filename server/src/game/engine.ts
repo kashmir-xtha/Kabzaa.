@@ -690,6 +690,36 @@ function validateTradeSide(room: Room, ownerId: string, side: TradeSide, label: 
   }
 }
 
+function pruneInvalidTrades(room: Room) {
+  room.trades = room.trades.filter((trade) => {
+    const fromPlayer = room.players.find((p) => p.id === trade.fromId);
+    const toPlayer = room.players.find((p) => p.id === trade.toId);
+
+    if (!fromPlayer || !toPlayer || fromPlayer.bankrupt || toPlayer.bankrupt) {
+      return false;
+    }
+
+    if (fromPlayer.money < trade.offer.money || toPlayer.money < trade.request.money) {
+      return false;
+    }
+
+    const fromStillOwnsAll = trade.offer.tiles.every(
+      (tileIdx) => room.ownership[tileIdx] === fromPlayer.id && (room.houses[tileIdx] ?? 0) === 0 && !room.mortgaged[tileIdx]
+    );
+
+    const toStillOwnsAll = trade.request.tiles.every(
+      (tileIdx) => room.ownership[tileIdx] === toPlayer.id && (room.houses[tileIdx] ?? 0) === 0 && !room.mortgaged[tileIdx]
+    );
+
+    if (!fromStillOwnsAll || !toStillOwnsAll) {
+      addLog(room, `An active trade between ${fromPlayer.nickname} and ${toPlayer.nickname} automatically fell through (property no longer available).`);
+      return false;
+    }
+
+    return true;
+  });
+}
+
 export function createTrade(room: Room, fromId: string, toId: string, offer: TradeSide, request: TradeSide): TradeOffer {
   if (fromId === toId) throw new GameError("You can't trade with yourself.");
   const fromPlayer = room.players.find((p) => p.id === fromId);
@@ -754,6 +784,9 @@ export function resolveTrade(room: Room, playerId: string, tradeId: string, acce
   trade.offer.tiles.forEach((t) => (room.ownership[t] = trade.toId));
   trade.request.tiles.forEach((t) => (room.ownership[t] = trade.fromId));
   addLog(room, `${fromPlayer.nickname} and ${toPlayer.nickname} completed a trade.`);
+
+  // --- AUTOMATICALLY PRUNE ANY OTHER CONFLICTING TRADES ---
+  pruneInvalidTrades(room);
 }
 
 export function withdrawTrade(room: Room, playerId: string, tradeId: string) {
