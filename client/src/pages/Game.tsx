@@ -670,14 +670,14 @@ function PlayerHud({ room, playerId, currentTurnId }: { room: Room; playerId: st
               <AvatarBadge id={p.avatar} size={30} />
               <div className="min-w-0 flex-1">
                 <div className="flex items-center gap-1.5">
-                  <p className="text-xs font-semibold text-parchment truncate">{p.nickname}</p>
+                  <p className="text-xs font-semibold text-parchment truncate mb-0.5">{p.nickname}</p>
                   {p.id === playerId && <span className="text-[10px] text-slate shrink-0">(you)</span>}
                   {p.id === currentTurnId && !p.bankrupt && <span className="text-[10px] text-amber shrink-0">●</span>}
 
                   {/* Prison Icon & Counter Badge */}
                   {prisonVisits > 0 && (
                     <div
-                      className="flex items-center gap-0.5 ml-auto text-signal bg-signal/10 border border-signal/30 pt-0.5 px-1 rounded text-[9px] font-mono shrink-0"
+                      className="flex items-center gap-0.5 ml-auto text-signal bg-signal/10 border border-signal/30 px-1 rounded text-[8px] font-mono shrink-0"
                       title={`Jailed ${prisonVisits} ${prisonVisits === 1 ? "time" : "times"}. Bail cost increases by $50 per sentence (Current: $${prisonVisits * 50})`}
                     >
                       <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" className="w-3 h-3">
