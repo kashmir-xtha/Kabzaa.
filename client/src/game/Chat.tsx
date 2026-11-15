@@ -23,7 +23,7 @@ export default function Chat({ messages, myPlayerId }: { messages: ChatMessage[]
   return (
     <div className="border border-ink-border bg-ink-raised p-4 flex flex-col h-full min-h-0">
       <p className="text-sm font-medium text-slate mb-3">Chat</p>
-      <div ref={listRef} className="flex-1 min-h-0 overflow-y-auto flex flex-col gap-2 pr-1 mb-3">
+      <div ref={listRef} className="flex-1 min-h-0 overflow-y-auto flex flex-col gap-2 pr-1 mb-3 scrollbar-none [&::-webkit-scrollbar]:hidden">
         {messages.length === 0 && <p className="text-xs text-slate">Say hello.</p>}
         {messages.map((m) => (
           <div key={m.id} className={`flex items-start gap-2 ${m.playerId === myPlayerId ? "flex-row-reverse text-right" : ""}`}>
@@ -45,7 +45,7 @@ export default function Chat({ messages, myPlayerId }: { messages: ChatMessage[]
         <button
           type="submit"
           disabled={!text.trim()}
-          className="bg-amber text-ink px-3 py-1.5 text-sm font-medium disabled:opacity-40 disabled:cursor-not-allowed hover:opacity-90 transition-opacity"
+          className="bg-amber text-ink px-3 py-1.5 text-sm font-medium disabled:opacity-40 disabled:cursor-not-allowed hover:opacity-90 transition-opacity cursor-pointer"
         >
           Send
         </button>

@@ -68,25 +68,23 @@ function TradeCard({
   }
 
   return (
-    <div className={`border px-3 py-2.5 flex flex-col gap-2 transition-all ${
-      isIncoming ? "border-teal/40 bg-teal/5" : isOutgoing ? "border-ink-border bg-ink/40" : "border-ink-border/50 bg-ink/20 opacity-90"
-    }`}>
+    <div className={`border px-3 py-2.5 flex flex-col gap-2 transition-all ${isIncoming ? "border-teal/40 bg-teal/5" : isOutgoing ? "border-ink-border bg-ink/40" : "border-ink-border/50 bg-ink/20 opacity-90"
+      }`}>
       <div className="flex items-center justify-between">
-        <span className={`text-[10px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded ${
-          isIncoming ? "bg-teal/20 text-teal" : isOutgoing ? "bg-slate/20 text-slate" : "bg-amber/20 text-amber"
-        }`}>
-          {isIncoming 
-            ? `Incoming from ${from?.nickname ?? "Someone"}` 
-            : isOutgoing 
-            ? `Outgoing to ${to?.nickname ?? "Someone"}` 
-            : `${from?.nickname ?? "Someone"} ➔ ${to?.nickname ?? "Someone"}`}
+        <span className={`text-[10px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded ${isIncoming ? "bg-teal/20 text-teal" : isOutgoing ? "bg-slate/20 text-slate" : "bg-amber/20 text-amber"
+          }`}>
+          {isIncoming
+            ? `Incoming from ${from?.nickname ?? "Someone"}`
+            : isOutgoing
+              ? `Outgoing to ${to?.nickname ?? "Someone"}`
+              : `${from?.nickname ?? "Someone"} ➔ ${to?.nickname ?? "Someone"}`}
         </span>
       </div>
 
       <div className="grid grid-cols-[auto_1fr] gap-x-2 gap-y-1 text-xs">
         <span className="text-slate font-mono">Offered:</span>
         <ColoredSideSummary side={trade.offer} colorClass={offerColor} />
-        
+
         <span className="text-slate font-mono">For:</span>
         <ColoredSideSummary side={trade.request} colorClass={requestColor} />
       </div>
@@ -143,7 +141,7 @@ function TradeComposer({
 }) {
   const { proposeTrade, respondToTrade } = useRoom();
   const others = players.filter((p) => p.id !== me.id);
-  
+
   const [counterpartId, setCounterpartId] = useState<string | null>(initialData?.counterpartId ?? others[0]?.id ?? null);
   const [offerMoney, setOfferMoney] = useState<number>(initialData?.offerMoney ?? 0);
   const [requestMoney, setRequestMoney] = useState<number>(initialData?.requestMoney ?? 0);
@@ -179,17 +177,17 @@ function TradeComposer({
   async function handleSend() {
     if (!counterpartId || sending) return;
     setSending(true);
-    
+
     if (initialData?.tradeId) {
       await respondToTrade(initialData.tradeId, false);
     }
 
     const ok = await proposeTrade(
-      counterpartId, 
-      { money: offerMoney, tiles: offerTiles }, 
+      counterpartId,
+      { money: offerMoney, tiles: offerTiles },
       { money: requestMoney, tiles: requestTiles }
     );
-    
+
     setSending(false);
     if (ok) onClose();
   }
@@ -197,11 +195,11 @@ function TradeComposer({
   if (others.length === 0) return null;
 
   return (
-    <div 
+    <div
       className="fixed inset-0 z-50 bg-ink/60 backdrop-blur-xs flex items-center justify-center p-4 overflow-x-hidden cursor-pointer"
       onClick={onClose}
     >
-      <div 
+      <div
         className="border border-amber bg-ink-raised-2 p-5 w-full max-w-xl shadow-2xl flex flex-col gap-4 animate-fade-in overflow-x-hidden cursor-default"
         onClick={(e) => e.stopPropagation()}
       >
@@ -222,9 +220,8 @@ function TradeComposer({
                   setCounterpartId(p.id);
                   setRequestTiles([]);
                 }}
-                className={`flex items-center gap-1.5 px-2.5 py-1.5 border text-xs cursor-pointer transition-colors ${
-                  counterpartId === p.id ? "border-amber bg-amber/10 text-parchment font-medium" : "border-ink-border bg-ink/40 text-slate hover:border-slate"
-                }`}
+                className={`flex items-center gap-1.5 px-2.5 py-1.5 border text-xs cursor-pointer transition-colors ${counterpartId === p.id ? "border-amber bg-amber/10 text-parchment font-medium" : "border-ink-border bg-ink/40 text-slate hover:border-slate"
+                  }`}
               >
                 <AvatarBadge id={p.avatar} size={22} />
                 {p.nickname}
@@ -241,7 +238,7 @@ function TradeComposer({
                 <p className="text-xs font-semibold text-signal">You Give</p>
                 <span className="text-[10px] font-mono text-slate">Bal: ${me.money.toLocaleString()}</span>
               </div>
-              
+
               <div className="flex items-center gap-1.5">
                 <span className="text-sm font-mono text-signal font-bold">$</span>
                 <input
@@ -258,7 +255,7 @@ function TradeComposer({
                 />
               </div>
 
-              <div 
+              <div
                 ref={giveScrollRef}
                 onScroll={(e) => checkScroll(e.currentTarget, setShowGiveArrow)}
                 className="flex flex-col gap-1.5 max-h-44 overflow-y-auto overflow-x-hidden pr-1 scrollbar-none [&::-webkit-scrollbar]:hidden relative"
@@ -271,11 +268,10 @@ function TradeComposer({
                     <div
                       key={t.index}
                       onClick={() => toggle(offerTiles, setOfferTiles, t.index)}
-                      className={`flex items-center gap-2 py-1.5 px-1 cursor-pointer transition-all duration-200 transform ${
-                        isSelected 
-                          ? "text-signal font-semibold translate-x-2" 
+                      className={`flex items-center gap-2 py-1.5 px-1 cursor-pointer transition-all duration-200 transform ${isSelected
+                          ? "text-signal font-semibold translate-x-2"
                           : "text-parchment/80 hover:text-parchment hover:translate-x-1"
-                      }`}
+                        }`}
                     >
                       {flagSrc ? (
                         <div className="w-5 h-5 rounded-full overflow-hidden border border-ink-border shrink-0 flex items-center justify-center bg-ink">
@@ -304,7 +300,7 @@ function TradeComposer({
                 <p className="text-xs font-semibold text-teal">You Get</p>
                 <span className="text-[10px] font-mono text-slate">Bal: ${counterpart.money.toLocaleString()}</span>
               </div>
-              
+
               <div className="flex items-center gap-1.5">
                 <span className="text-sm font-mono text-teal font-bold">$</span>
                 <input
@@ -321,7 +317,7 @@ function TradeComposer({
                 />
               </div>
 
-              <div 
+              <div
                 ref={getScrollRef}
                 onScroll={(e) => checkScroll(e.currentTarget, setShowGetArrow)}
                 className="flex flex-col gap-1.5 max-h-44 overflow-y-auto overflow-x-hidden pr-1 scrollbar-none [&::-webkit-scrollbar]:hidden relative"
@@ -334,11 +330,10 @@ function TradeComposer({
                     <div
                       key={t.index}
                       onClick={() => toggle(requestTiles, setRequestTiles, t.index)}
-                      className={`flex items-center gap-2 py-1.5 px-1 cursor-pointer transition-all duration-200 transform ${
-                        isSelected 
-                          ? "text-teal font-semibold translate-x-2" 
+                      className={`flex items-center gap-2 py-1.5 px-1 cursor-pointer transition-all duration-200 transform ${isSelected
+                          ? "text-teal font-semibold translate-x-2"
                           : "text-parchment/80 hover:text-parchment hover:translate-x-1"
-                      }`}
+                        }`}
                     >
                       {flagSrc ? (
                         <div className="w-5 h-5 rounded-full overflow-hidden border border-ink-border shrink-0 flex items-center justify-center bg-ink">
@@ -388,6 +383,19 @@ export default function TradePanel({ room, me }: { room: Room; me: Player }) {
   const allTrades = room.trades;
   const totalActiveCount = allTrades.length;
 
+  const tradesScrollRef = useRef<HTMLDivElement>(null);
+  const [showTradesArrow, setShowTradesArrow] = useState(false);
+
+  function checkTradesScroll(el: HTMLDivElement | null) {
+    if (!el) return;
+    const { scrollTop, scrollHeight, clientHeight } = el;
+    setShowTradesArrow(scrollHeight > clientHeight && scrollTop + clientHeight < scrollHeight - 5);
+  }
+
+  useEffect(() => {
+    checkTradesScroll(tradesScrollRef.current);
+  }, [allTrades.length]);
+
   function handleOpenNew() {
     setCounterData(undefined);
     setComposerOpen(true);
@@ -417,44 +425,56 @@ export default function TradePanel({ room, me }: { room: Room; me: Player }) {
               </span>
             )}
           </div>
-          <button 
-            onClick={handleOpenNew} 
+          <button
+            onClick={handleOpenNew}
             className="text-xs font-medium text-amber hover:text-amber/80 transition-colors cursor-pointer"
           >
             + Propose
           </button>
         </div>
 
-        <div className="flex flex-col gap-2 flex-1 min-h-0 overflow-y-auto pr-1">
-          {allTrades.map((t) => (
-            <TradeCard
-              key={t.id}
-              trade={t}
-              players={room.players}
-              currentUserId={me.id}
-              onAccept={() => respondToTrade(t.id, true)}
-              onDecline={() => respondToTrade(t.id, false)}
-              onCounter={() => handleCounter(t)}
-              onCancel={() => cancelTrade(t.id)}
-            />
-          ))}
+        <div className="relative flex-1 min-h-0 flex flex-col overflow-hidden">
+          <div
+            ref={tradesScrollRef}
+            onScroll={(e) => checkTradesScroll(e.currentTarget)}
+            className="flex flex-col gap-2 flex-1 min-h-0 overflow-y-auto pr-1 scrollbar-none [&::-webkit-scrollbar]:hidden"
+          >
+            {allTrades.map((t) => (
+              <TradeCard
+                key={t.id}
+                trade={t}
+                players={room.players}
+                currentUserId={me.id}
+                onAccept={() => respondToTrade(t.id, true)}
+                onDecline={() => respondToTrade(t.id, false)}
+                onCounter={() => handleCounter(t)}
+                onCancel={() => cancelTrade(t.id)}
+              />
+            ))}
 
-          {totalActiveCount === 0 && (
-            <p className="text-xs text-slate italic py-4 text-center my-auto">No active trades currently open.</p>
+            {totalActiveCount === 0 && (
+              <p className="text-xs text-slate italic py-4 text-center my-auto">No active trades currently open.</p>
+            )}
+          </div>
+
+          {showTradesArrow && (
+            <div className="absolute bottom-1 right-2 pointer-events-none text-amber animate-bounce text-xs font-bold bg-ink/80 px-1.5 pt-1 pb-0.5 rounded-full shadow">
+              ▼
+            </div>
           )}
         </div>
       </div>
 
       {composerOpen && (
-        <TradeComposer 
-          room={room} 
-          me={me} 
-          players={room.players} 
-          initialData={counterData} 
+        <TradeComposer
+          room={room}
+          me={me}
+          players={room.players}
+          initialData={counterData}
           onClose={() => {
             setComposerOpen(false);
             setCounterData(undefined);
-          }} 
+          }}
         />
       )}
     </>
