@@ -4,7 +4,7 @@ import Dice from "../components/Dice";
 import Board from "../game/board/Board";
 import { AvatarBadge } from "../game/avatars";
 import { BOARD, groupHouseCost, tileAt, type BoardTile } from "../game/board/data";
-import { checkCanBuildHouse, checkCanMortgage, checkCanSellHouse, checkCanUnmortgage, ownsWholeGroup } from "../game/board/economy";
+import { checkCanBuildHouse, checkCanMortgage, checkCanSellHouse, checkCanUnmortgage } from "../game/board/economy";
 import TradePanel from "../game/TradePanel";
 import Chat from "../game/Chat";
 import { useRoom } from "../game/RoomContext";
@@ -715,6 +715,24 @@ function PlayerHud({ room, playerId, currentTurnId }: { room: Room; playerId: st
   );
 }
 
+function getGroupDetails(groupKey: string): { name: string; flag?: string } {
+  const g = groupKey.toLowerCase();
+
+  if (g === "nepal") return { name: "Nepal", flag: "/flags/nepal.png" };
+  if (g === "russia") return { name: "Russia", flag: "/flags/russia.png" };
+  if (g === "spain") return { name: "Spain", flag: "/flags/spain.png" };
+  if (g === "germany") return { name: "Germany", flag: "/flags/germany.png" };
+  if (g === "japan") return { name: "Japan", flag: "/flags/japan.png" };
+  if (g === "uk") return { name: "United Kingdom", flag: "/flags/uk.png" };
+  if (g === "uae") return { name: "UAE", flag: "/flags/uae.png" };
+  if (g === "usa") return { name: "USA", flag: "/flags/usa.png" };
+
+  if (g === "transit") return { name: "Transit Hubs" };
+  if (g === "utility") return { name: "Utilities" };
+
+  return { name: groupKey.charAt(0).toUpperCase() + groupKey.slice(1) };
+}
+
 function PropertiesPanel({
   room,
   me,
@@ -731,7 +749,15 @@ function PropertiesPanel({
   onUnmortgage: (tileIndex: number) => void;
 }) {
   const owned = BOARD.filter((t) => room.ownership[t.index] === me.id);
-  const properties = owned.filter((t): t is BoardTile & { group: string } => t.kind === "property" && Boolean(t.group));
+
+  const groupedTiles: { [groupKey: string]: BoardTile[] } = {};
+  for (const tile of owned) {
+    const key = tile.group ?? tile.kind ?? "other";
+    if (!groupedTiles[key]) groupedTiles[key] = [];
+    groupedTiles[key].push(tile);
+  }
+
+  const groupKeys = Object.keys(groupedTiles);
 
   return (
     <div className="border border-ink-border bg-ink-raised p-3 flex-1 min-h-0 flex flex-col">
@@ -740,79 +766,126 @@ function PropertiesPanel({
       {owned.length === 0 ? (
         <p className="text-xs text-slate italic py-4 text-center my-auto">No properties held.</p>
       ) : (
-        <div className="flex flex-col gap-2 flex-1 min-h-0 overflow-y-auto pr-1">
-          {owned.map((tile) => {
-            const isProperty = tile.kind === "property";
-            const houses = room.houses[tile.index] ?? 0;
-            const mortgaged = Boolean(room.mortgaged[tile.index]);
-            const buildCheck = isProperty ? checkCanBuildHouse(room, tile, me) : null;
-            const sellCheck = isProperty ? checkCanSellHouse(room, tile, me) : null;
-            const mortgageCheck = checkCanMortgage(room, tile, me);
-            const unmortgageCheck = checkCanUnmortgage(room, tile, me);
+        <div className="flex flex-col gap-2.5 flex-1 min-h-0 overflow-y-auto pr-1">
+          {groupKeys.map((groupKey) => {
+            const tilesInGroup = groupedTiles[groupKey];
+            const { name: displayName, flag: flagSrc } = getGroupDetails(groupKey);
+            const isTransitOrUtility = groupKey === "transit" || groupKey === "utility";
+
+            const gridColsClass = groupKey === "transit"
+              ? "grid-cols-4"
+              : groupKey === "utility"
+                ? "grid-cols-2"
+                : "grid-cols-3";
 
             return (
-              <div key={tile.index} className={`border px-2.5 py-1.5 bg-ink/30 ${mortgaged ? "border-signal/50" : "border-ink-border"}`}>
-                <div className="flex items-center justify-between gap-2">
-                  <div className="flex items-center gap-1.5 min-w-0">
-                    <span className="text-xs text-parchment font-medium truncate">{tile.name}</span>
-                  </div>
-                  {mortgaged ? (
-                    <span className="text-[10px] text-signal font-semibold shrink-0">Mortgaged</span>
-                  ) : (
-                    houses > 0 && <span className="text-[10px] text-amber font-mono shrink-0">{houses >= 5 ? "Hotel" : `${houses}🏠`}</span>
+              <div key={groupKey} className="border border-ink-border bg-ink/30 p-2 flex flex-col gap-2">
+                {/* Country / Group Header */}
+                <div className="flex items-center gap-2 border-b border-ink-border/50 pb-1.5">
+                  {!isTransitOrUtility && (
+                    <div className="w-5 h-5 rounded-full overflow-hidden border border-ink-border shrink-0 flex items-center justify-center bg-ink">
+                      {flagSrc ? (
+                        <img src={flagSrc} alt="" className="w-full h-full object-cover" />
+                      ) : (
+                        <span className="text-[9px]">🌐</span>
+                      )}
+                    </div>
                   )}
+                  <span className="text-xs font-bold text-parchment uppercase tracking-wide truncate">
+                    {displayName}
+                  </span>
                 </div>
 
-                {isProperty && !mortgaged && (
-                  <div className="flex items-center gap-1.5 mt-1.5">
-                    <button
-                      onClick={() => onSell(tile.index)}
-                      disabled={!sellCheck?.ok}
-                      title={sellCheck?.reason}
-                      className="flex-1 border border-ink-border py-0.5 text-[10px] text-parchment disabled:opacity-30 hover:border-signal transition-colors"
-                    >
-                      Sell {sellCheck?.cost !== undefined ? `+$${sellCheck.cost}` : ""}
-                    </button>
-                    <button
-                      onClick={() => onBuild(tile.index)}
-                      disabled={!buildCheck?.ok}
-                      title={buildCheck?.reason}
-                      className="flex-1 bg-amber text-ink py-0.5 text-[10px] font-bold disabled:opacity-30 hover:opacity-90 transition-opacity"
-                    >
-                      Build ${groupHouseCost(tile.group)}
-                    </button>
-                  </div>
-                )}
+                {/* City Boxes Grid */}
+                <div className={`grid ${gridColsClass} gap-1.5`}>
+                  {tilesInGroup.map((tile) => {
+                    const isProperty = tile.kind === "property";
+                    const mortgaged = Boolean(room.mortgaged[tile.index]);
+                    const buildCheck = isProperty ? checkCanBuildHouse(room, tile, me) : null;
+                    const sellCheck = isProperty ? checkCanSellHouse(room, tile, me) : null;
+                    const mortgageCheck = checkCanMortgage(room, tile, me);
+                    const unmortgageCheck = checkCanUnmortgage(room, tile, me);
 
-                <div className="flex items-center gap-1.5 mt-1">
-                  {mortgaged ? (
-                    <button
-                      onClick={() => onUnmortgage(tile.index)}
-                      disabled={!unmortgageCheck.ok}
-                      title={unmortgageCheck.reason}
-                      className="flex-1 border border-teal text-teal py-0.5 text-[10px] font-semibold disabled:opacity-30 hover:bg-teal/10 transition-colors"
-                    >
-                      Unmortgage ${unmortgageCheck.amount ?? ""}
-                    </button>
-                  ) : (
-                    <button
-                      onClick={() => onMortgage(tile.index)}
-                      disabled={!mortgageCheck.ok}
-                      title={mortgageCheck.reason}
-                      className="flex-1 border border-ink-border py-0.5 text-[10px] text-slate disabled:opacity-30 hover:border-amber hover:text-amber transition-colors"
-                    >
-                      Mortgage +${mortgageCheck.amount ?? ""}
-                    </button>
-                  )}
+                    return (
+                      <div
+                        key={tile.index}
+                        className={`border p-1.5 flex flex-col justify-between gap-1 bg-ink/50 text-center ${mortgaged ? "border-signal/50 opacity-80" : "border-ink-border"
+                          }`}
+                      >
+                        {/* City Name & House/Hotel Status */}
+                        <div className="flex flex-col items-center">
+                          <span className="text-[11px] font-medium text-parchment leading-tight truncate w-full" title={tile.name}>
+                            {tile.name}
+                          </span>
+
+                          {mortgaged && (
+                            <span className="text-[9px] text-signal font-semibold mt-0.5">Mortgaged</span>
+                          )}
+                        </div>
+
+                        {/* Action Buttons Row */}
+                        {isProperty && !mortgaged ? (
+                          <div className="grid grid-cols-2 gap-1">
+                            {/* Sell Button */}
+                            <button
+                              onClick={() => onSell(tile.index)}
+                              disabled={!sellCheck?.ok}
+                              title={sellCheck?.reason}
+                              className="bg-signal/20 border border-signal text-signal hover:bg-signal hover:text-ink py-1 font-bold disabled:opacity-30 disabled:cursor-not-allowed transition-all cursor-pointer flex items-center justify-center gap-0.5 rounded-xs"
+                            >
+                              <span>
+                                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                                  <path d="M12 21l9-10h-5V3H8v8H3l9 10z" />
+                                </svg>
+                              </span>
+                            </button>
+
+                            {/* Build Button */}
+                            <button
+                              onClick={() => onBuild(tile.index)}
+                              disabled={!buildCheck?.ok}
+                              title={buildCheck?.reason}
+                              className="bg-teal/20 border border-teal text-teal hover:bg-teal hover:text-ink font-bold disabled:opacity-30 disabled:cursor-not-allowed transition-all cursor-pointer flex items-center justify-center gap-0.5 rounded-xs"
+                            >
+                              <span>
+                                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                                  <path d="M12 3L3 13h5v8h8v-8h5L12 3z" />
+                                </svg>
+                              </span>
+                            </button>
+                          </div>
+                        ) : null}
+
+                        {/* Mortgage / Unmortgage Button Row */}
+                        <div>
+                          {mortgaged ? (
+                            <button
+                              onClick={() => onUnmortgage(tile.index)}
+                              disabled={!unmortgageCheck.ok}
+                              title={unmortgageCheck.reason}
+                              className="w-full border border-teal text-teal hover:bg-teal/10 py-0.5 text-[9px] font-semibold disabled:opacity-30 transition-colors cursor-pointer rounded-xs"
+                            >
+                              Unmortgage (${unmortgageCheck.amount ?? ""})
+                            </button>
+                          ) : (
+                            <button
+                              onClick={() => onMortgage(tile.index)}
+                              disabled={!mortgageCheck.ok}
+                              title={mortgageCheck.reason}
+                              className="w-full border border-ink-border text-slate hover:border-amber hover:text-amber px-0.5 text-[9px] font-medium disabled:opacity-30 transition-colors cursor-pointer rounded-xs"
+                            >
+                              Mortgage (+${mortgageCheck.amount ?? ""})
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
                 </div>
               </div>
             );
           })}
         </div>
-      )}
-
-      {properties.length > 0 && !properties.some((t) => ownsWholeGroup(room, t, me.id)) && (
-        <p className="text-[10px] text-slate mt-1.5 italic shrink-0">Own all tiles in a group to build houses.</p>
       )}
     </div>
   );
