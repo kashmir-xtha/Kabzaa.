@@ -29,13 +29,13 @@ export interface GroupInfo {
 
 export const GROUPS: GroupInfo[] = [
   { id: "nepal", label: "Nepal", houseCost: 50 },
-  { id: "russia", label: "Russia", houseCost: 50 },
+  { id: "russia", label: "Russia", houseCost: 80 },
   { id: "spain", label: "Spain", houseCost: 100 },
-  { id: "germany", label: "Germany", houseCost: 100 },
+  { id: "germany", label: "Germany", houseCost: 120 },
   { id: "japan", label: "Japan", houseCost: 150 },
-  { id: "uk", label: "United Kingdom", houseCost: 150 },
+  { id: "uk", label: "United Kingdom", houseCost: 180 },
   { id: "uae", label: "UAE", houseCost: 200 },
-  { id: "usa", label: "USA", houseCost: 200 },
+  { id: "usa", label: "USA", houseCost: 220 },
 ];
 
 export function groupHouseCost(id: string | undefined): number {

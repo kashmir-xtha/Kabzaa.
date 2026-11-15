@@ -699,8 +699,8 @@ function PlayerHud({ room, playerId, currentTurnId }: { room: Room; playerId: st
                       {p.onVacation && <span className="text-blue-400 font-sans font-medium">Vacation</span>}
                       {/* --- Display Free Pass count if they have any --- */}
                       {p.freePassCount && p.freePassCount > 0 ? (
-                        <span className="text-amber font-sans font-semibold bg-amber/10 border border-amber/30 px-1 rounded">
-                          🎟️ Pass {p.freePassCount > 1 ? `(${p.freePassCount})` : ""}
+                        <span className="text-amber font-sans font-semibold bg-amber/10 border border-amber/30 px-1 rounded" title="Prison escape pass">
+                          🎟️ {p.freePassCount > 1 ? `(${p.freePassCount})` : ""}
                         </span>
                       ) : null}
                     </>
@@ -771,6 +771,8 @@ function PropertiesPanel({
             const tilesInGroup = groupedTiles[groupKey];
             const { name: displayName, flag: flagSrc } = getGroupDetails(groupKey);
             const isTransitOrUtility = groupKey === "transit" || groupKey === "utility";
+            const buildCost = groupHouseCost(groupKey);
+            const sellRefund = Math.floor(buildCost / 2);
 
             const gridColsClass = groupKey === "transit"
               ? "grid-cols-4"
@@ -781,25 +783,39 @@ function PropertiesPanel({
             return (
               <div key={groupKey} className="border border-ink-border bg-ink/30 p-2 flex flex-col gap-2">
                 {/* Country / Group Header */}
-                <div className="flex items-center gap-2 border-b border-ink-border/50 pb-1.5">
+                <div className="flex items-center justify-between gap-2 border-b border-ink-border/50 pb-1.5">
+                  <div className="flex items-center gap-2 min-w-0">
+                    {!isTransitOrUtility && (
+                      <div className="w-5 h-5 rounded-full overflow-hidden border border-ink-border shrink-0 flex items-center justify-center bg-ink">
+                        {flagSrc ? (
+                          <img src={flagSrc} alt="" className="w-full h-full object-cover" />
+                        ) : (
+                          <span className="text-[9px]">🌐</span>
+                        )}
+                      </div>
+                    )}
+                    <span className="text-xs font-bold text-parchment uppercase tracking-wide truncate">
+                      {displayName}
+                    </span>
+                  </div>
+
                   {!isTransitOrUtility && (
-                    <div className="w-5 h-5 rounded-full overflow-hidden border border-ink-border shrink-0 flex items-center justify-center bg-ink">
-                      {flagSrc ? (
-                        <img src={flagSrc} alt="" className="w-full h-full object-cover" />
-                      ) : (
-                        <span className="text-[9px]">🌐</span>
-                      )}
+                    <div className="flex items-center gap-2 text-[10px] font-mono shrink-0">
+                      <span className="text-teal" title="Build House Cost">
+                        ▲${buildCost}
+                      </span>
+                      <span className="text-signal" title="Sell House Refund">
+                        ▼${sellRefund}
+                      </span>
                     </div>
                   )}
-                  <span className="text-xs font-bold text-parchment uppercase tracking-wide truncate">
-                    {displayName}
-                  </span>
                 </div>
 
                 {/* City Boxes Grid */}
                 <div className={`grid ${gridColsClass} gap-1.5`}>
                   {tilesInGroup.map((tile) => {
                     const isProperty = tile.kind === "property";
+                    const houses = room.houses[tile.index] ?? 0;
                     const mortgaged = Boolean(room.mortgaged[tile.index]);
                     const buildCheck = isProperty ? checkCanBuildHouse(room, tile, me) : null;
                     const sellCheck = isProperty ? checkCanSellHouse(room, tile, me) : null;
@@ -809,61 +825,80 @@ function PropertiesPanel({
                     return (
                       <div
                         key={tile.index}
-                        className={`border p-1.5 flex flex-col justify-between gap-1 bg-ink/50 text-center ${mortgaged ? "border-signal/50 opacity-80" : "border-ink-border"
-                          }`}
+                        className={`border p-1.5 flex flex-col justify-between bg-ink/50 text-center h-24 ${
+                          mortgaged ? "border-signal/50 opacity-80" : "border-ink-border"
+                        }`}
                       >
-                        {/* City Name & House/Hotel Status */}
+                        {/* Top Section: City Name & Fixed-Height House Indicator Row */}
                         <div className="flex flex-col items-center">
                           <span className="text-[11px] font-medium text-parchment leading-tight truncate w-full" title={tile.name}>
                             {tile.name}
                           </span>
 
-                          {mortgaged && (
-                            <span className="text-[9px] text-signal font-semibold mt-0.5">Mortgaged</span>
+                          {/* Fixed container height (h-4) prevents card content from shifting */}
+                          <div className="flex items-center justify-center h-3.5">
+                            {mortgaged ? (
+                              <span className="text-[9px] text-signal font-semibold">Mortgaged</span>
+                            ) : (
+                              houses >= 5 ? (
+                                <span className="text-[8px] font-mono font-bold bg-amber/20 text-amber px-1.5 py-0.2 rounded border border-amber/40 tracking-wider">
+                                  HOTEL
+                                </span>
+                              ) : (
+                                <div className="flex items-center gap-0.5">
+                                  {Array.from({ length: 4 }).map((_, i) => (
+                                    <span
+                                      key={i}
+                                      className={`w-2 h-2 rounded-xs transition-colors ${
+                                        i < houses ? "bg-amber shadow-xs shadow-amber/50" : "bg-ink-border/40"
+                                      }`}
+                                      title={`${houses} House${houses > 1 ? "s" : ""}`}
+                                    />
+                                  ))}
+                                </div>
+                              )
+                            )}
+                          </div>
+                        </div>
+
+                        {/* Middle Section: Action Buttons Row (Sell / Build) */}
+                        <div className="my-1">
+                          {isProperty && !mortgaged ? (
+                            <div className="grid grid-cols-2 gap-1">
+                              <button
+                                onClick={() => onSell(tile.index)}
+                                disabled={!sellCheck?.ok}
+                                title={sellCheck?.reason}
+                                className="bg-signal/20 border border-signal text-signal hover:bg-signal hover:text-ink py-1 font-bold disabled:opacity-30 disabled:cursor-not-allowed transition-all cursor-pointer flex items-center justify-center rounded-xs"
+                              >
+                                <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
+                                  <path d="M12 21l9-10h-5V3H8v8H3l9 10z" />
+                                </svg>
+                              </button>
+                              <button
+                                onClick={() => onBuild(tile.index)}
+                                disabled={!buildCheck?.ok}
+                                title={buildCheck?.reason}
+                                className="bg-teal/20 border border-teal text-teal hover:bg-teal hover:text-ink font-bold disabled:opacity-30 disabled:cursor-not-allowed transition-all cursor-pointer flex items-center justify-center rounded-xs"
+                              >
+                                <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
+                                  <path d="M12 3L3 13h5v8h8v-8h5L12 3z" />
+                                </svg>
+                              </button>
+                            </div>
+                          ) : (
+                            <div className="h-5.5" />
                           )}
                         </div>
 
-                        {/* Action Buttons Row */}
-                        {isProperty && !mortgaged ? (
-                          <div className="grid grid-cols-2 gap-1">
-                            {/* Sell Button */}
-                            <button
-                              onClick={() => onSell(tile.index)}
-                              disabled={!sellCheck?.ok}
-                              title={sellCheck?.reason}
-                              className="bg-signal/20 border border-signal text-signal hover:bg-signal hover:text-ink py-1 font-bold disabled:opacity-30 disabled:cursor-not-allowed transition-all cursor-pointer flex items-center justify-center gap-0.5 rounded-xs"
-                            >
-                              <span>
-                                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
-                                  <path d="M12 21l9-10h-5V3H8v8H3l9 10z" />
-                                </svg>
-                              </span>
-                            </button>
-
-                            {/* Build Button */}
-                            <button
-                              onClick={() => onBuild(tile.index)}
-                              disabled={!buildCheck?.ok}
-                              title={buildCheck?.reason}
-                              className="bg-teal/20 border border-teal text-teal hover:bg-teal hover:text-ink font-bold disabled:opacity-30 disabled:cursor-not-allowed transition-all cursor-pointer flex items-center justify-center gap-0.5 rounded-xs"
-                            >
-                              <span>
-                                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
-                                  <path d="M12 3L3 13h5v8h8v-8h5L12 3z" />
-                                </svg>
-                              </span>
-                            </button>
-                          </div>
-                        ) : null}
-
-                        {/* Mortgage / Unmortgage Button Row */}
+                        {/* Bottom Section: Mortgage / Unmortgage Button */}
                         <div>
                           {mortgaged ? (
                             <button
                               onClick={() => onUnmortgage(tile.index)}
                               disabled={!unmortgageCheck.ok}
                               title={unmortgageCheck.reason}
-                              className="w-full border border-teal text-teal hover:bg-teal/10 py-0.5 text-[9px] font-semibold disabled:opacity-30 transition-colors cursor-pointer rounded-xs"
+                              className="w-full border border-teal text-teal hover:bg-teal/10 px-0.5 text-[8.5px] font-semibold disabled:opacity-30 transition-colors cursor-pointer rounded-xs"
                             >
                               Unmortgage (${unmortgageCheck.amount ?? ""})
                             </button>
@@ -872,7 +907,7 @@ function PropertiesPanel({
                               onClick={() => onMortgage(tile.index)}
                               disabled={!mortgageCheck.ok}
                               title={mortgageCheck.reason}
-                              className="w-full border border-ink-border text-slate hover:border-amber hover:text-amber px-0.5 text-[9px] font-medium disabled:opacity-30 transition-colors cursor-pointer rounded-xs"
+                              className="w-full border border-ink-border text-slate hover:border-amber hover:text-amber px-0.5 text-[8.5px] font-medium disabled:opacity-30 transition-colors cursor-pointer rounded-xs"
                             >
                               Mortgage (+${mortgageCheck.amount ?? ""})
                             </button>
