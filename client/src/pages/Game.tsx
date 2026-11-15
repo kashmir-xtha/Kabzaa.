@@ -794,6 +794,22 @@ function PropertiesPanel({
                         )}
                       </div>
                     )}
+                    {isTransitOrUtility && (
+                      <div className="w-5 h-5 rounded-full overflow-hidden border border-ink-border shrink-0 flex items-center justify-center bg-ink">
+                        {groupKey === "transit" ? (
+                          <svg viewBox="0 0 24 24" className="w-3.5 h-3.5 sm:w-4 sm:h-4">
+                            <rect x="5" y="4" width="14" height="12" rx="2" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+                            <circle cx="8.5" cy="16.5" r="1.3" fill="currentColor" stroke="none" />
+                            <circle cx="15.5" cy="16.5" r="1.3" fill="currentColor" stroke="none" />
+                            <path d="M5 10h14" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+                          </svg>
+                        ) : (
+                          <svg viewBox="0 0 24 24" className="w-3.5 h-3.5 sm:w-4 sm:h-4">
+                            <path d="M13 3 L6 13 h5 l-1 8 8-11 h-5 Z" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+                          </svg>
+                        )}
+                      </div>
+                    )}
                     <span className="text-xs font-bold text-parchment uppercase tracking-wide truncate">
                       {displayName}
                     </span>
@@ -825,9 +841,7 @@ function PropertiesPanel({
                     return (
                       <div
                         key={tile.index}
-                        className={`border p-1.5 flex flex-col justify-between bg-ink/50 text-center h-24 ${
-                          mortgaged ? "border-signal/50 opacity-80" : "border-ink-border"
-                        }`}
+                        className={`border p-1.5 flex flex-col justify-between bg-ink/50 text-center ${!isTransitOrUtility ? "h-24" : ""} ${mortgaged ? "border-signal/50 opacity-80" : "border-ink-border"}`}
                       >
                         {/* Top Section: City Name & Fixed-Height House Indicator Row */}
                         <div className="flex flex-col items-center">
@@ -838,31 +852,32 @@ function PropertiesPanel({
                           {/* Fixed container height (h-4) prevents card content from shifting */}
                           <div className="flex items-center justify-center h-3.5">
                             {mortgaged ? (
-                              <span className="text-[9px] text-signal font-semibold">Mortgaged</span>
+                              <span className="text-[10px] text-signal font-semibold">Mortgaged</span>
                             ) : (
-                              houses >= 5 ? (
-                                <span className="text-[8px] font-mono font-bold bg-amber/20 text-amber px-1.5 py-0.2 rounded border border-amber/40 tracking-wider">
-                                  HOTEL
-                                </span>
-                              ) : (
-                                <div className="flex items-center gap-0.5">
-                                  {Array.from({ length: 4 }).map((_, i) => (
-                                    <span
-                                      key={i}
-                                      className={`w-2 h-2 rounded-xs transition-colors ${
-                                        i < houses ? "bg-amber shadow-xs shadow-amber/50" : "bg-ink-border/40"
-                                      }`}
-                                      title={`${houses} House${houses > 1 ? "s" : ""}`}
-                                    />
-                                  ))}
-                                </div>
+                              !isTransitOrUtility && (
+                                houses >= 5 ? (
+                                  <span className="text-[8px] font-mono font-bold bg-amber/20 text-amber px-1.5 py-0.2 rounded border border-amber/40 tracking-wider">
+                                    HOTEL
+                                  </span>
+                                ) : (
+                                  <div className="flex items-center gap-0.5">
+                                    {Array.from({ length: 4 }).map((_, i) => (
+                                      <span
+                                        key={i}
+                                        className={`w-2 h-2 rounded-xs transition-colors ${i < houses ? "bg-amber shadow-xs shadow-amber/50" : "bg-ink-border/40"
+                                          }`}
+                                        title={`${houses} House${houses > 1 ? "s" : ""}`}
+                                      />
+                                    ))}
+                                  </div>
+                                )
                               )
                             )}
                           </div>
                         </div>
 
                         {/* Middle Section: Action Buttons Row (Sell / Build) */}
-                        <div className="my-1">
+                        {!isTransitOrUtility && (<div className="my-1">
                           {isProperty && !mortgaged ? (
                             <div className="grid grid-cols-2 gap-1">
                               <button
@@ -890,6 +905,7 @@ function PropertiesPanel({
                             <div className="h-5.5" />
                           )}
                         </div>
+                        )}
 
                         {/* Bottom Section: Mortgage / Unmortgage Button */}
                         <div>
@@ -898,7 +914,7 @@ function PropertiesPanel({
                               onClick={() => onUnmortgage(tile.index)}
                               disabled={!unmortgageCheck.ok}
                               title={unmortgageCheck.reason}
-                              className="w-full border border-teal text-teal hover:bg-teal/10 px-0.5 text-[8.5px] font-semibold disabled:opacity-30 transition-colors cursor-pointer rounded-xs"
+                              className={`w-full border border-teal text-teal hover:bg-teal/10 ${groupKey === "utility" ? "text-[10px] py-0.5" : "text-[8.5px]"} disabled:opacity-30 transition-colors cursor-pointer rounded-xs overflow-clip`}
                             >
                               Unmortgage (${unmortgageCheck.amount ?? ""})
                             </button>
@@ -907,7 +923,7 @@ function PropertiesPanel({
                               onClick={() => onMortgage(tile.index)}
                               disabled={!mortgageCheck.ok}
                               title={mortgageCheck.reason}
-                              className="w-full border border-ink-border text-slate hover:border-amber hover:text-amber px-0.5 text-[8.5px] font-medium disabled:opacity-30 transition-colors cursor-pointer rounded-xs"
+                              className={`w-full border border-ink-border text-slate hover:border-amber hover:text-amber ${groupKey === "utility" ? "text-[10px] py-0.5" : "text-[8.5px]"} text-[8.5px] font-medium disabled:opacity-30 transition-colors cursor-pointer rounded-xs`}
                             >
                               Mortgage (+${mortgageCheck.amount ?? ""})
                             </button>
@@ -921,7 +937,8 @@ function PropertiesPanel({
             );
           })}
         </div>
-      )}
-    </div>
+      )
+      }
+    </div >
   );
 }
