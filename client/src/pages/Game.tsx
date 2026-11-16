@@ -8,6 +8,7 @@ import { checkCanBuildHouse, checkCanMortgage, checkCanSellHouse, checkCanUnmort
 import TradePanel from "../game/TradePanel";
 import Chat from "../game/Chat";
 import { useRoom } from "../game/RoomContext";
+import { useToast } from "../components/Toast";
 import type { Player, Room } from "../types";
 
 export default function Game() {
@@ -566,6 +567,42 @@ function CenterPanel({
   );
 }
 
+function renderStyledLogMessage(message: string) {
+  // We can split or match keywords to apply custom styles
+  // For example, splitting by words or checking includes for color tagging
+  const parts = message.split(/(\bTwist\b|\bTWIST\b|\bTreasure\b|\bTREASURE\b|\bHigh Stakes\b|\bPrison\b|\bVacation\b|\bdoubles\b|\bbankrupt\b|\bWAGER WIN\b|\bWAGER LOSS\b|\bIncome Tax\b|\bLuxury Toll\b)/g);
+  console.log(parts)
+
+  return parts.map((part, index) => {
+    switch (part) {
+      case "Twist":
+      case "TWIST":
+        return <span key={index} className="text-purple-500 font-semibold">{part}</span>;
+      case "Treasure":
+      case "TREASURE":
+        return <span key={index} className="text-amber font-semibold">{part}</span>;
+      case "WAGER WIN":
+        return <span key={index} className="text-green-500 font-semibold">{part}</span>;
+      case "WAGER LOSS":
+      case "Income Tax":
+      case "Luxury Toll":
+        return <span key={index} className="text-red-600 font-semibold">{part}</span>;
+      case "High Stakes":
+        return <span key={index} className="text-purple-300 font-semibold">{part}</span>;
+      case "Prison":
+        return <span key={index} className="text-signal font-semibold">{part}</span>;
+      case "Vacation":
+        return <span key={index} className="text-blue-400 font-semibold">{part}</span>;
+      case "doubles":
+        return <span key={index} className="text-teal font-semibold">{part}</span>;
+      case "bankrupt":
+        return <span key={index} className="text-signal font-bold">{part}</span>;
+      default:
+        return part;
+    }
+  });
+}
+
 function CenterEventLog({ log }: { log: Room["log"] }) {
   const reversedLog = [...log].reverse();
 
@@ -576,7 +613,7 @@ function CenterEventLog({ log }: { log: Room["log"] }) {
       >
         {reversedLog.map((entry) => (
           <p key={entry.id} className="text-[10px] text-slate leading-tight shrink-0">
-            {entry.message}
+            {renderStyledLogMessage(entry.message)}
           </p>
         ))}
       </div>
@@ -748,6 +785,7 @@ function PropertiesPanel({
   onMortgage: (tileIndex: number) => void;
   onUnmortgage: (tileIndex: number) => void;
 }) {
+  const { push } = useToast();
   const owned = BOARD.filter((t) => room.ownership[t.index] === me.id);
   const ownedCount = (pid: string) => Object.values(room.ownership).filter((id) => id === pid).length;
 
@@ -776,7 +814,7 @@ function PropertiesPanel({
   return (
     <div className="border border-ink-border bg-ink-raised p-3 flex-1 min-h-0 flex flex-col">
       <div className="flex items-center gap-2 mb-2">
-            <p className="text-xs font-semibold text-slate uppercase tracking-wider">My Properties</p>
+        <p className="text-xs font-semibold text-slate uppercase tracking-wider">My Properties</p>
         {ownedCount(me.id) > 0 && (
           <span className="text-[10px] font-mono font-bold bg-amber/20 text-amber px-1.5 py-0.2 rounded-full">
             {ownedCount(me.id)}
@@ -906,20 +944,28 @@ function PropertiesPanel({
                               {isProperty && !mortgaged ? (
                                 <div className="grid grid-cols-2 gap-1">
                                   <button
-                                    onClick={() => onSell(tile.index)}
-                                    disabled={!sellCheck?.ok}
-                                    title={sellCheck?.reason}
-                                    className="bg-signal/20 border border-signal text-signal hover:bg-signal hover:text-ink py-1 font-bold disabled:opacity-30 disabled:cursor-not-allowed transition-all cursor-pointer flex items-center justify-center rounded-xs"
+                                    onClick={() => {
+                                      if (sellCheck && !sellCheck.ok) {
+                                        push(sellCheck.reason ?? "Cannot sell house", "error");
+                                      } else {
+                                        onSell(tile.index);
+                                      }
+                                    }}
+                                    className={`${!sellCheck?.ok ? "opacity-30" : ""} bg-signal/20 border border-signal text-signal hover:bg-signal hover:text-ink py-1 font-bold transition-all cursor-pointer flex items-center justify-center rounded-xs`}
                                   >
                                     <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
                                       <path d="M12 21l9-10h-5V3H8v8H3l9 10z" />
                                     </svg>
                                   </button>
                                   <button
-                                    onClick={() => onBuild(tile.index)}
-                                    disabled={!buildCheck?.ok}
-                                    title={buildCheck?.reason}
-                                    className="bg-teal/20 border border-teal text-teal hover:bg-teal hover:text-ink font-bold disabled:opacity-30 disabled:cursor-not-allowed transition-all cursor-pointer flex items-center justify-center rounded-xs"
+                                    onClick={() => {
+                                      if (buildCheck && !buildCheck.ok) {
+                                        push(buildCheck.reason ?? "Cannot build house", "error");
+                                      } else {
+                                        onBuild(tile.index);
+                                      }
+                                    }}
+                                    className={`${!buildCheck?.ok ? "opacity-30" : ""} bg-teal/20 border border-teal text-teal hover:bg-teal hover:text-ink font-bold transition-all cursor-pointer flex items-center justify-center rounded-xs`}
                                   >
                                     <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
                                       <path d="M12 3L3 13h5v8h8v-8h5L12 3z" />
@@ -936,19 +982,27 @@ function PropertiesPanel({
                           <div>
                             {mortgaged ? (
                               <button
-                                onClick={() => onUnmortgage(tile.index)}
-                                disabled={!unmortgageCheck.ok}
-                                title={unmortgageCheck.reason}
-                                className={`w-full border border-teal text-teal hover:bg-teal/10 ${groupKey === "utility" ? "text-[10px] py-0.5" : "text-[8.5px]"} disabled:opacity-30 transition-colors cursor-pointer rounded-xs overflow-clip`}
+                                onClick={() => {
+                                  if (!unmortgageCheck.ok) {
+                                    push(unmortgageCheck.reason ?? "Cannot unmortgage", "error");
+                                  } else {
+                                    onUnmortgage(tile.index);
+                                  }
+                                }}
+                                className={`${!unmortgageCheck.ok ? "opacity-30" : ""} w-full border border-teal text-teal hover:bg-teal/10 ${groupKey === "utility" ? "text-[10px] py-0.5" : "text-[8.5px]"} transition-colors cursor-pointer rounded-xs overflow-clip`}
                               >
                                 Unmortgage (${unmortgageCheck.amount ?? ""})
                               </button>
                             ) : (
                               <button
-                                onClick={() => onMortgage(tile.index)}
-                                disabled={!mortgageCheck.ok}
-                                title={mortgageCheck.reason}
-                                className={`w-full border border-ink-border text-slate hover:border-amber hover:text-amber ${groupKey === "utility" ? "text-[10px] py-0.5" : "text-[8.5px]"} font-medium disabled:opacity-30 transition-colors cursor-pointer rounded-xs`}
+                                onClick={() => {
+                                  if (!mortgageCheck.ok) {
+                                    push(mortgageCheck.reason ?? "Cannot mortage", "error");
+                                  } else {
+                                    onMortgage(tile.index);
+                                  }
+                                }}
+                                className={`${!mortgageCheck.ok ? "opacity-30" : ""} w-full border border-ink-border text-slate hover:border-amber hover:text-amber ${groupKey === "utility" ? "text-[10px] py-0.5" : "text-[8.5px]"} font-medium transition-colors cursor-pointer rounded-xs`}
                               >
                                 Mortgage (+${mortgageCheck.amount ?? ""})
                               </button>
