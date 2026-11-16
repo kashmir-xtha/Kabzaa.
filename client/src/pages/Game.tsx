@@ -749,6 +749,7 @@ function PropertiesPanel({
   onUnmortgage: (tileIndex: number) => void;
 }) {
   const owned = BOARD.filter((t) => room.ownership[t.index] === me.id);
+  const ownedCount = (pid: string) => Object.values(room.ownership).filter((id) => id === pid).length;
 
   const groupedTiles: { [groupKey: string]: BoardTile[] } = {};
   for (const tile of owned) {
@@ -774,13 +775,20 @@ function PropertiesPanel({
 
   return (
     <div className="border border-ink-border bg-ink-raised p-3 flex-1 min-h-0 flex flex-col">
-      <p className="text-xs font-semibold text-slate uppercase tracking-wider mb-2 shrink-0">My properties</p>
+      <div className="flex items-center gap-2 mb-2">
+            <p className="text-xs font-semibold text-slate uppercase tracking-wider">My Properties</p>
+        {ownedCount(me.id) > 0 && (
+          <span className="text-[10px] font-mono font-bold bg-amber/20 text-amber px-1.5 py-0.2 rounded-full">
+            {ownedCount(me.id)}
+          </span>
+        )}
+      </div>
 
       {owned.length === 0 ? (
         <p className="text-xs text-slate italic py-4 text-center my-auto">No properties held.</p>
       ) : (
         <div className="relative flex-1 min-h-0 flex flex-col overflow-hidden">
-          <div 
+          <div
             ref={scrollRef}
             onScroll={(e) => checkScroll(e.currentTarget)}
             className="flex flex-col gap-2.5 flex-1 min-h-0 overflow-y-auto pr-1 scrollbar-none [&::-webkit-scrollbar]:hidden"

@@ -7,10 +7,10 @@ import vacation from "../../assets/vacation.png";
 import treasure from "../../assets/treasure.png"
 
 const BAR_SIDE: Record<Edge, string> = {
-  bottom: "border-t-2 sm:border-t-4",
-  left: "border-r-2 sm:border-r-4",
-  top: "border-b-2 sm:border-b-4",
-  right: "border-l-2 sm:border-l-4",
+  bottom: "border-t-2 sm:border-t-5",
+  left: "border-r-2 sm:border-r-5",
+  top: "border-b-2 sm:border-b-5",
+  right: "border-l-2 sm:border-l-5",
 };
 
 const BAR_COLOR_PROP: Record<Edge, string> = {
@@ -47,6 +47,19 @@ function getTileFlag(tileName: string): string | undefined {
     return "/flags/usa.png";
   }
   return undefined;
+}
+
+// Helper to convert hex color to rgba string with custom opacity
+function hexToRgba(hex: string, alpha: number): string {
+  let cleanHex = hex.replace("#", "");
+  if (cleanHex.length === 3) {
+    cleanHex = cleanHex.split("").map((c) => c + c).join("");
+  }
+  const num = parseInt(cleanHex, 16);
+  const r = (num >> 16) & 255;
+  const g = (num >> 8) & 255;
+  const b = num & 255;
+  return `rgba(${r}, ${g}, ${b}, ${alpha})`;
 }
 
 function TileIcon({ kind }: { kind: BoardTile["kind"] }) {
@@ -107,10 +120,7 @@ function TileIcon({ kind }: { kind: BoardTile["kind"] }) {
     case "twist":
       return (
         <svg viewBox="0 0 24 24" className="w-7 h-7">
-          {/* Soft background circle */}
           <circle cx="12" cy="12" r="10" fill="currentColor" fillOpacity="0.12" />
-
-          {/* Main curve */}
           <path
             d="M9.5 9C9.5 7.61929 10.6193 6.5 12 6.5C13.3807 6.5 14.5 7.61929 14.5 9C14.5 10.15 13.7 11.1 12.65 11.4C12.1 11.55 12 12.05 12 12.5V13.5"
             stroke="currentColor"
@@ -118,8 +128,6 @@ function TileIcon({ kind }: { kind: BoardTile["kind"] }) {
             strokeLinecap="round"
             strokeLinejoin="round"
           />
-
-          {/* Dot */}
           <circle cx="12" cy="16.75" r="1.25" fill="currentColor" />
         </svg>
       );
@@ -179,7 +187,12 @@ export default function Tile({
 
   if (isPurchasable) {
     const dashColor = ownerColor || "#808080";
-    const barStyle = { [BAR_COLOR_PROP[edge]]: dashColor } as React.CSSProperties;
+    
+    // change the value (0.35) for opacity
+    const barStyle = {
+      [BAR_COLOR_PROP[edge]]: dashColor,
+      ...(ownerColor ? { backgroundColor: hexToRgba(ownerColor, 0.35) } : {}),
+    } as React.CSSProperties;
 
     // Shows current rent if owned, or base purchase price if unowned
     const displayValue = ownerColor && rent !== undefined ? `$${rent}` : `$${tile.price}`;
@@ -210,8 +223,7 @@ export default function Tile({
           {tile.kind === "property" ? <HousesIndicator houses={houses} /> : <div />}
 
           <span
-            className={`text-[9px] font-mono ${ownerColor ? "font-semibold" : "text-parchment/90 font-medium drop-shadow-xs"}`}
-            style={ownerColor ? { color: ownerColor } : undefined}
+            className={`text-[9px] font-mono text-parchment/90 font-medium drop-shadow-xs}`}
           >
             {displayValue}
           </span>
