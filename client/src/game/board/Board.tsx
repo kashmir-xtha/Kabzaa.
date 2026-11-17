@@ -1,5 +1,5 @@
-import type { ReactNode } from "react";
-import { BOARD, type BoardTile } from "./data";
+import { useEffect, useRef, useState, type ReactNode } from "react";
+import { BOARD, GROUPS, type BoardTile } from "./data";
 import { ownsWholeGroup } from "./economy";
 import { gridPosition, edgeOf } from "./layout";
 import Tile from "./Tile";
@@ -24,7 +24,6 @@ function getEffectiveRent(
   if (!ownerId || !ownership) return undefined;
   if (room && room.mortgaged && room.mortgaged[tile.index]) return 0;
 
-  // If the owner is locked up in holding, rent is 0!
   if (room && room.players) {
     const owner = room.players.find((p) => p.id === ownerId);
     if (owner && owner.inJail) return 0;
@@ -61,6 +60,61 @@ export default function Board({
   bountyPool?: number;
   children: ReactNode;
 }) {
+  const prevCompletedGroupsRef = useRef<Record<string, string>>({});
+  const isFirstRenderRef = useRef(true);
+  const [flashingGroups, setFlashingGroups] = useState<Record<string, string>>({});
+
+  useEffect(() => {
+    const currentCompleted: Record<string, string> = {};
+
+    for (const group of GROUPS) {
+      const groupTiles = BOARD.filter((t) => t.group === group.id);
+      if (groupTiles.length === 0) continue;
+
+      const firstOwner = ownership[groupTiles[0].index];
+      if (!firstOwner) continue;
+
+      const allOwnedBySame = groupTiles.every((t) => ownership[t.index] === firstOwner);
+      if (allOwnedBySame) {
+        currentCompleted[group.id] = firstOwner;
+      }
+    }
+
+    if (isFirstRenderRef.current) {
+      isFirstRenderRef.current = false;
+      prevCompletedGroupsRef.current = currentCompleted;
+      return;
+    }
+
+    const newlyCompleted: Record<string, string> = {};
+    for (const [groupId, ownerId] of Object.entries(currentCompleted)) {
+      if (prevCompletedGroupsRef.current[groupId] !== ownerId) {
+        const owner = players.find((p) => p.id === ownerId);
+        if (owner) {
+          newlyCompleted[groupId] = avatarColor(owner.avatar);
+        }
+      }
+    }
+
+    prevCompletedGroupsRef.current = currentCompleted;
+
+    if (Object.keys(newlyCompleted).length > 0) {
+      setFlashingGroups((prev) => ({ ...prev, ...newlyCompleted }));
+
+      const timer = setTimeout(() => {
+        setFlashingGroups((prev) => {
+          const next = { ...prev };
+          for (const groupId of Object.keys(newlyCompleted)) {
+            delete next[groupId];
+          }
+          return next;
+        });
+      }, 2000);
+
+      return () => clearTimeout(timer);
+    }
+  }, [ownership, players]);
+
   const byPosition = new Map<number, Player[]>();
   players.forEach((p) => {
     const list = byPosition.get(p.position) ?? [];
@@ -94,6 +148,9 @@ export default function Board({
         const occupants = byPosition.get(tile.index) ?? [];
         const tileHouses = houses[tile.index] ?? 0;
         const currentRent = getEffectiveRent(tile, ownerId, tileHouses, ownership, mockRoom);
+        
+        // Check if tile group is currently flashing
+        const groupFlashColor = tile.group ? flashingGroups[tile.group] : undefined;
 
         return (
           <div key={tile.index} style={{ gridRow: pos.row, gridColumn: pos.col }} className="min-w-0 min-h-0 relative">
@@ -107,6 +164,7 @@ export default function Board({
               houses={tileHouses}
               rent={currentRent}
               bountyPool={tile.index === 20 ? bountyPool : undefined}
+              groupFlashColor={groupFlashColor}
             />
 
             {/* Overlapping Stacked Token Layout */}

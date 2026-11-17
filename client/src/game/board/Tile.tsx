@@ -150,6 +150,7 @@ export default function Tile({
   houses = 0,
   rent,
   bountyPool,
+  groupFlashColor,
 }: {
   tile: BoardTile;
   edge: Edge;
@@ -160,6 +161,7 @@ export default function Tile({
   houses?: number;
   rent?: number;
   bountyPool?: number;
+  groupFlashColor?: string;
 }) {
   const base = "relative flex w-full h-full bg-ink-raised border border-ink-border/60 overflow-hidden";
 
@@ -182,25 +184,30 @@ export default function Tile({
     );
   }
 
-  // Handle Property, Transit, and Utility tiles uniformly for ownership and price tags
   const isPurchasable = tile.kind === "property" || tile.kind === "transit" || tile.kind === "utility";
 
   if (isPurchasable) {
     const dashColor = ownerColor || "#808080";
     
-    // change the value (0.35) for opacity
     const barStyle = {
       [BAR_COLOR_PROP[edge]]: dashColor,
       ...(ownerColor ? { backgroundColor: hexToRgba(ownerColor, 0.35) } : {}),
     } as React.CSSProperties;
 
-    // Shows current rent if owned, or base purchase price if unowned
     const displayValue = ownerColor && rent !== undefined ? `$${rent}` : `$${tile.price}`;
     const flagSrc = tile.kind === "property" ? getTileFlag(tile.name) : undefined;
     const tint = tile.kind === "transit" ? "text-amber" : tile.kind === "utility" ? "text-teal" : "";
 
     return (
       <div className={`${base} flex-col justify-between ${BAR_SIDE[edge]}`} style={barStyle}>
+        {/* Monopoly Group Completion Glow Animation Overlay */}
+        {groupFlashColor && (
+          <div
+            className="absolute inset-0 z-20 pointer-events-none animate-monopoly-glow"
+            style={{ "--flash-color": groupFlashColor } as React.CSSProperties}
+          />
+        )}
+
         {/* Background flag layer for properties */}
         {flagSrc && (
           <div className="absolute inset-0 opacity-30 pointer-events-none flex items-center justify-center z-0">
@@ -223,7 +230,7 @@ export default function Tile({
           {tile.kind === "property" ? <HousesIndicator houses={houses} /> : <div />}
 
           <span
-            className={`text-[9px] font-mono text-parchment/90 font-medium drop-shadow-xs}`}
+            className={`text-[9px] font-mono text-parchment/90 font-medium drop-shadow-xs`}
           >
             {displayValue}
           </span>
