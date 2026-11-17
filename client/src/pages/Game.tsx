@@ -28,6 +28,7 @@ export default function Game() {
     unmortgageProperty,
     forfeitGame,
     playWager,
+    declareBankruptcy,
     skipWager,
   } = useRoom();
   const [confirmingForfeit, setConfirmingForfeit] = useState(false);
@@ -257,6 +258,7 @@ export default function Game() {
               onPass={passPurchase}
               onPlayWager={playWager}
               onSkipWager={skipWager}
+              onDeclareBankruptcy={declareBankruptcy}
               onRollComplete={handleRollComplete}
             />
           </Board>
@@ -386,6 +388,7 @@ function CenterPanel({
   onPass,
   onPlayWager,
   onSkipWager,
+  onDeclareBankruptcy,
   onRollComplete,
 }: {
   room: Room;
@@ -402,10 +405,12 @@ function CenterPanel({
   onPass: () => void;
   onPlayWager: (amount: number) => void;
   onSkipWager: () => void;
+  onDeclareBankruptcy: () => void;
   onRollComplete: () => void;
 }) {
   const bonusRoll = room.turnPhase === "rolling" && room.lastRoll?.isDoubles;
   const tile = tileAt(me.position);
+  const isInDebt = me.money < 0;
 
   if (room.status === "finished") {
     return (
@@ -445,7 +450,25 @@ function CenterPanel({
           <p className="text-xs text-slate text-center">You're out — spectating.</p>
         ) : isMyTurn ? (
           <div className="flex flex-col gap-1.5 w-full">
-            {room.turnPhase === "awaiting-purchase" && (
+            {/* --- DEBT WARNING & BANKRUPTCY PANEL --- */}
+            {isInDebt && (
+              <div className="border border-signal bg-signal/10 mt-2 p-1 flex flex-col gap-1.5 rounded animate-pulse">
+                <p className="text-[11px] font-bold text-signal text-center uppercase tracking-wider">
+                  ⚠️ Negative Balance (${me.money.toLocaleString()})
+                </p>
+                <p className="text-[10px] text-parchment text-center leading-tight">
+                  Sell houses or mortgage properties on the right to clear your debt. You cannot end your turn until your balance is $0 or more.
+                </p>
+                <button
+                  onClick={onDeclareBankruptcy}
+                  className="w-full border border-signal/60 text-signal hover:bg-signal hover:text-ink py-1 text-[10px] font-semibold transition-colors cursor-pointer rounded"
+                >
+                  Declare Bankruptcy
+                </button>
+              </div>
+            )}
+
+            {room.turnPhase === "awaiting-purchase" && !isInDebt && (
               <div className="border border-amber bg-ink-raised-2 p-1.5 flex flex-col gap-1.5">
                 <div className="text-center">
                   <p className="text-xs text-parchment font-semibold truncate">{tileAt(me.position).name}</p>
@@ -469,19 +492,18 @@ function CenterPanel({
               </div>
             )}
 
-            {/* Dynamic Jail Bail Cost Calculation */}
+            {/* Jail Bail Controls */}
             {(() => {
               const bailCost = (me.prisonCount || 1) * 50;
-
               return (
                 <>
-                  {me.inJail && room.turnPhase === "rolling" && (
+                  {me.inJail && room.turnPhase === "rolling" && !isInDebt && (
                     <p className="text-[10px] text-slate leading-tight text-center mb-1">
                       In Holding ({me.jailTurns}/3). Roll doubles{me.freePassCount > 0 ? ", use pass," : ""} or pay ${bailCost}.
                     </p>
                   )}
 
-                  {room.turnPhase === "rolling" && me.inJail && (
+                  {room.turnPhase === "rolling" && me.inJail && !isInDebt && (
                     <div className="flex gap-2 w-full">
                       <button
                         onClick={onPayBail}
@@ -505,7 +527,7 @@ function CenterPanel({
               );
             })()}
 
-            {room.turnPhase === "rolling" && (
+            {room.turnPhase === "rolling" && !isInDebt && (
               <button
                 onClick={onRoll}
                 className="cursor-pointer bg-amber text-ink font-bold py-2 text-xs uppercase tracking-wider hover:opacity-90 transition-opacity shadow-md"
@@ -514,7 +536,7 @@ function CenterPanel({
               </button>
             )}
 
-            {room.turnPhase === "awaiting-wager" && (
+            {room.turnPhase === "awaiting-wager" && !isInDebt && (
               <div className="border border-amber bg-ink-raised-2 p-2 flex flex-col gap-2 rounded">
                 <div className="text-center">
                   <p className="text-xs font-bold text-amber uppercase tracking-wider">High Stakes Wager</p>
@@ -547,13 +569,16 @@ function CenterPanel({
               </div>
             )}
 
+            {/* --- END TURN --- */}
             {room.turnPhase === "rolled" && (
-              <button
-                onClick={onEndTurn}
-                className="cursor-pointer bg-teal text-ink font-bold py-2 text-xs uppercase tracking-wider hover:opacity-90 transition-opacity shadow-md"
-              >
-                End turn
-              </button>
+              !isInDebt ?
+                <button
+                  onClick={onEndTurn}
+                  className="cursor-pointer bg-teal text-ink font-bold py-2 text-xs uppercase tracking-wider hover:opacity-90 transition-opacity shadow-md"
+                >
+                  End turn
+                </button>
+                : null
             )}
           </div>
         ) : (

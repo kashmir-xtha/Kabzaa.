@@ -166,6 +166,10 @@ export function registerSocketHandlers(io: Server, roomManager: RoomManager) {
     socket.on("game:skipWager", (_payload: unknown, ack: Ack<Room>) => {
       handle(() => roomManager.skipWager(socket.id), ack);
     });
+
+    socket.on("game:bankrupt", (_payload: unknown, ack: Ack<Room>) => {
+      handle(() => roomManager.bankrupt(socket.id), ack);
+    });
     
     socket.on("game:payBail", (_payload: unknown, ack: Ack<Room>) => {
       handle(() => roomManager.payBail(socket.id), ack);

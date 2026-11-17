@@ -368,6 +368,14 @@ export class RoomManager {
     return room;
   }
 
+  bankrupt(socketId: string): Room {
+    const { room, player } = this.requirePlayer(socketId);
+    this.requireInProgress(room);
+    declareBankruptcy(room, player.id);
+    this.scheduleTurnTimer(room);
+    return room;
+  }
+
   endPlayerTurn(socketId: string): Room {
     const { room, player } = this.requirePlayer(socketId);
     this.requireInProgress(room);

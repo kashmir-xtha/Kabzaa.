@@ -42,6 +42,7 @@ interface RoomContextValue {
   cancelTrade: (tradeId: string) => void;
   mortgageProperty: (tileIndex: number) => void;
   unmortgageProperty: (tileIndex: number) => void;
+  declareBankruptcy: () => void;
   forfeitGame: () => void;
   sendChatMessage: (text: string) => void;
   playWager: (amount: number) => void;
@@ -212,6 +213,7 @@ export function RoomProvider({ children }: { children: ReactNode }) {
     (tileIndex: number) => void fireAndReport("game:unmortgage", { tileIndex }),
     [fireAndReport]
   );
+  const declareBankruptcy = useCallback(() => void fireAndReport("game:bankrupt", {}), [fireAndReport])
   const forfeitGame = useCallback(() => void fireAndReport("game:forfeit", {}), [fireAndReport]);
   const sendChatMessage = useCallback((text: string) => void fireAndReport("chat:send", { text }), [fireAndReport]);
   const playWager = useCallback(
@@ -253,6 +255,7 @@ export function RoomProvider({ children }: { children: ReactNode }) {
         cancelTrade,
         mortgageProperty,
         unmortgageProperty,
+        declareBankruptcy,
         forfeitGame,
         sendChatMessage,
         kickPlayer,

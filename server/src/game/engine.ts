@@ -338,7 +338,7 @@ function currentPlayer(room: Room): Player {
  * the normal purchase-prompt / bonus-roll logic. */
 function handlePostMove(room: Room, player: Player, result: MoveResult, phaseIfNoDecision: TurnPhase) {
   if (player.money < 0) {
-    resolveDebt(room, player, result.creditorId ?? null);
+    resolveDebt(room, player);
     if (player.bankrupt) {
       if (room.status !== "finished" && room.turnOrder.length > 0) {
         room.currentTurnIndex = room.currentTurnIndex % room.turnOrder.length;
@@ -831,40 +831,6 @@ export function postChatMessage(room: Room, player: Player, text: string) {
 }
 
 // --- Bankruptcy & win conditions ------------------------------------------
-
-/** Sells houses (highest tile first) and mortgages properties (highest
- * price first) until the player's balance is non-negative or they're out
- * of assets. Bypasses the normal even-building UI rules since this is a
- * forced survival sale, not a voluntary player action. */
-function liquidateAssets(room: Room, player: Player) {
-  while (player.money < 0) {
-    const candidates = BOARD.filter(
-      (t) => t.kind === "property" && room.ownership[t.index] === player.id && (room.houses[t.index] ?? 0) > 0
-    );
-    if (candidates.length === 0) break;
-    candidates.sort((a, b) => (room.houses[b.index] ?? 0) - (room.houses[a.index] ?? 0));
-    const tile = candidates[0];
-    const cost = groupHouseCost(tile.group);
-    const refund = Math.floor(cost / 2);
-    room.houses[tile.index] = (room.houses[tile.index] ?? 0) - 1;
-    player.money += refund;
-    addLog(room, `${player.nickname} sold a house on ${tile.name} for $${refund} to cover debt.`);
-  }
-
-  while (player.money < 0) {
-    const candidates = BOARD.filter(
-      (t) => isPurchasable(t) && room.ownership[t.index] === player.id && !room.mortgaged[t.index] && (room.houses[t.index] ?? 0) === 0
-    );
-    if (candidates.length === 0) break;
-    candidates.sort((a, b) => (b.price ?? 0) - (a.price ?? 0));
-    const tile = candidates[0];
-    const amount = Math.floor((tile.price ?? 0) / 2);
-    room.mortgaged[tile.index] = true;
-    player.money += amount;
-    addLog(room, `${player.nickname} mortgaged ${tile.name} for $${amount} to cover debt.`);
-  }
-}
-
 function teamName(room: Room, teamId: TeamId | null): string {
   return room.teams.find((t) => t.id === teamId)?.name ?? "A team";
 }
@@ -918,10 +884,10 @@ function executeBankruptcy(room: Room, player: Player, creditorId: string | null
   checkWinCondition(room);
 }
 
-function resolveDebt(room: Room, player: Player, creditorId: string | null) {
-  if (player.money >= 0) return;
-  liquidateAssets(room, player);
-  if (player.money < 0) executeBankruptcy(room, player, creditorId);
+function resolveDebt(room: Room, player: Player) {
+  if (player.money < 0) {
+    addLog(room, `${player.nickname} is in debt ($${player.money})! Must clear balance or declare bankruptcy.`);
+  }
 }
 
 export function declareBankruptcy(room: Room, playerId: string) {
@@ -935,15 +901,11 @@ export function declareBankruptcy(room: Room, playerId: string) {
   if (room.status === "finished" || room.turnOrder.length === 0) return;
 
   if (currentPlayerId === playerId) {
-    // The current player forfeited — whoever slid into their old array slot
-    // (or index 0 if they were last) becomes current for a fresh turn.
     room.currentTurnIndex = room.currentTurnIndex % room.turnOrder.length;
     room.turnPhase = "rolling";
     room.lastRoll = null;
     room.pendingPostPurchasePhase = null;
   } else {
-    // Someone else forfeited off-turn — keep pointing at the same current
-    // player, just re-find their index since the array may have shifted.
     const newIndex = room.turnOrder.indexOf(currentPlayerId);
     if (newIndex !== -1) room.currentTurnIndex = newIndex;
   }
